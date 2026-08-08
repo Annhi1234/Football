@@ -135,7 +135,8 @@
   <div class="panel">
     <p><b>1. Збірна.</b> Обери одну з доступних збірних з реальними гравцями: Англія, Україна або Швеція.</p>
     <p><b>2. Склад.</b> З повного ростеру обери 11 гравців в основу (1 ВР, 4 ЗХ, 4 ПЗ, 2 НП) та 5 у запас. На трансферному ринку можна підписати вільних агентів замість слабших гравців.</p>
-    <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка або відпочинок. Це впливає на форму й ризик травм.</p>
+    <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка або відпочинок. Це впливає на форму й ризик травм, а атака/захист/фізо ще й назавжди прокачують відповідних гравців (позначка +N біля ОВР) — прогрес ніколи не губиться.</p>
+    <p><b>Фоли й картки.</b> У кожному матчі трапляються фоли: жовті картки та (рідше) червоні — за грубий фол або другу жовту. Червона картка залишає команду в меншості до кінця матчу, а 2 жовті за турнір чи будь-яка червона — це дискваліфікація гравця на наступний матч, так само як травма.</p>
     <p><b>4. Чемпіонат світу.</b> Спочатку 8 груп по 4 команди. Твоя збірна грає 3 матчі групового етапу, інші матчі симулюються.</p>
     <p><b>5. Плей-оф.</b> Топ-2 з групи виходять у 1/8 фіналу, потім 1/4, 1/2 і фінал. Нічия після 90 хв — як на справжньому чемпіонаті світу: спочатку додатковий час (120'), а якщо нічия зберігається — серія післяматчевих пенальті вирішує переможця.</p>
   </div>
@@ -383,10 +384,10 @@ const POS_ORDER = ['GK','DF','MF','FW'];
 const STARTER_QUOTA = {GK:1,DF:4,MF:4,FW:2}; // 11 total
 
 const TRAININGS = [
-  {key:'atk', title:'Атакувальні дії', desc:'+ до сили атаки на наступний матч.'},
-  {key:'def', title:'Оборонні дії', desc:'+ до стійкості оборони на наступний матч.'},
-  {key:'phys', title:'Фізична підготовка', desc:'Швидко відновлює форму, але є невеликий ризик травми при перевтомі.'},
-  {key:'rest', title:'Відпочинок', desc:'Найкраще відновлення форми, без ризику травм, без бонусу.'},
+  {key:'atk', title:'Атакувальні дії', desc:'+ до сили атаки на наступний матч, а нападники й півзахисники прогресують назавжди.'},
+  {key:'def', title:'Оборонні дії', desc:'+ до стійкості оборони на наступний матч, а захисники й воротар прогресують назавжди.'},
+  {key:'phys', title:'Фізична підготовка', desc:'Швидко відновлює форму і трохи прокачує всіх гравців, але є невеликий ризик травми при перевтомі.'},
+  {key:'rest', title:'Відпочинок', desc:'Найкраще відновлення форми, без ризику травм, але без прокачки навичок.'},
 ];
 
 let uid = 1;
@@ -455,7 +456,7 @@ function buildTeamGrid(){
 function selectTeam(key){
   resetState();
   CS.teamKey=key;
-  CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100}));
+  CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100, ovrBase:p.ovr, growth:0, tournamentYellows:0}));
   buildRosterList();
   showScreen('cScreenSquad');
 }
@@ -514,6 +515,8 @@ function buildRosterList(){
       const inBench = CS.bench.includes(p.id);
       const row = document.createElement('div');
       row.className='playerRow'+(inStart?' starter':inBench?' bench':'')+(p.injured>0?' injured':'');
+      const gained = Math.max(0, Math.round(p.ovr-(p.ovrBase!=null?p.ovrBase:p.ovr)));
+      const stateLabel = p.injured>0 ? (p.banReason==='suspension'?'ДИСКВАЛІФІК. '+p.injured:'ТРАВМА '+p.injured) : inStart?'ОСНОВА':inBench?'ЗАПАС':'РЕЗЕРВ';
       row.innerHTML =
         '<div class="p-tag '+p.pos+'">'+p.pos+'</div>'+
         '<div style="flex:1;min-width:0;">'+
@@ -521,9 +524,8 @@ function buildRosterList(){
           '<div class="p-sub">'+(p.club?p.club+' • ':'')+'Вік '+p.age+' • Форма '+p.stamina+'%</div>'+
         '</div>'+
         '<div class="stambar"><i style="width:'+p.stamina+'%"></i></div>'+
-        '<div class="p-ovr">'+p.ovr+'</div>'+
-        '<div class="p-state '+(p.injured>0?'hurt':inStart?'on':inBench?'bn':'')+'">'+
-          (p.injured>0?'ТРАВМА '+p.injured:inStart?'ОСНОВА':inBench?'ЗАПАС':'РЕЗЕРВ')+
+        '<div class="p-ovr">'+p.ovr+(gained>0?'<span style="color:#5ecf7a;font-size:9px;display:block;">+'+gained+'</span>':'')+'</div>'+
+        '<div class="p-state '+(p.injured>0?'hurt':inStart?'on':inBench?'bn':'')+'">'+stateLabel+
         '</div>';
       row.onclick=()=>cycleAssignment(p.id);
       wrap.appendChild(row);
@@ -592,7 +594,7 @@ function openSignFlow(fa){
   CS.roster = CS.roster.filter(p=>p.id!==weakest.id);
   CS.starters = CS.starters.filter(id=>id!==weakest.id);
   CS.bench = CS.bench.filter(id=>id!==weakest.id);
-  CS.roster.push({name:fa.name,club:fa.club,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100});
+  CS.roster.push({name:fa.name,club:fa.club,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100,ovrBase:fa.ovr,growth:0,tournamentYellows:0});
   CS.freeAgents = CS.freeAgents.filter(x=>x.id!==fa.id);
   toast(fa.name+' підписаний!');
   buildTransferList();
@@ -898,6 +900,7 @@ function applyTraining(key){
   CS.trainBonus = {atk:0,def:0};
   if(key==='atk') CS.trainBonus.atk = 9;
   if(key==='def') CS.trainBonus.def = 9;
+  let injuryToastFired = false;
   if(key==='phys'){
     CS.roster.forEach(p=>{
       if(p.injured>0) return;
@@ -905,13 +908,45 @@ function applyTraining(key){
       p.stamina = Math.min(100,p.stamina+20);
       if(risky && Math.random()<0.05){
         p.injured = 1+Math.floor(Math.random()*2);
+        p.banReason = 'injury';
         toast(p.name+' отримав травму на тренуванні! Пропустить '+p.injured+' матч(і)');
+        injuryToastFired = true;
       }
     });
   }
   if(key==='rest'){
     CS.roster.forEach(p=>{ if(p.injured===0) p.stamina = Math.min(100,p.stamina+35); });
   }
+  const improved = growPlayers(key);
+  if(!injuryToastFired && improved.length){
+    const names = improved.slice(0,2).map(p=>p.name).join(', ');
+    const extra = improved.length>2 ? ' та ще '+(improved.length-2) : '';
+    toast('Прогрес: '+names+extra+' стали сильнішими (ОВР +1)');
+  }
+}
+
+// Training permanently grows player skill (never resets between matches, unlike the one-match trainBonus above).
+// Attack training grows FW/MF, defence training grows DF/GK, physical training gives everyone a small all-round boost.
+// Rest is pure recovery — no skill growth, matching its in-game description.
+function growPlayers(key){
+  const leveledUp = [];
+  CS.roster.forEach(p=>{
+    if(p.injured>0) return;
+    if(p.ovrBase==null) p.ovrBase = p.ovr;
+    if(p.growth==null) p.growth = 0;
+    const growthCap = Math.min(6, 99-p.ovrBase);
+    if(p.growth>=growthCap) return;
+    let relevant = false, rate = 0;
+    if(key==='atk'){ relevant = (p.pos==='FW'||p.pos==='MF'); rate = 0.45+Math.random()*0.35; }
+    else if(key==='def'){ relevant = (p.pos==='DF'||p.pos==='GK'); rate = 0.45+Math.random()*0.35; }
+    else if(key==='phys'){ relevant = true; rate = 0.2+Math.random()*0.2; }
+    if(!relevant) return;
+    const before = p.ovr;
+    p.growth = Math.min(growthCap, p.growth+rate);
+    p.ovr = Math.min(99, Math.round(p.ovrBase+p.growth));
+    if(p.ovr>before) leveledUp.push(p);
+  });
+  return leveledUp;
 }
 
 /* ========================================================================
@@ -936,7 +971,6 @@ function simulateMatch(sideA,sideB,opts){
   let strB = teamStrength(sideB.onPitch);
   strA *= 0.78+0.22*((sideA.avgStamina||90)/100);
   strB *= 0.78+0.22*((sideB.avgStamina||90)/100);
-  const diff = strA-strB;
   // training bonuses act directly on shot quality/finishing, on top of the base strength diff,
   // so a training focus is always felt in the match regardless of the overall rating gap.
   const trainAtkA=(sideA.trainAtk||0), trainDefA=(sideA.trainDef||0);
@@ -944,16 +978,61 @@ function simulateMatch(sideA,sideB,opts){
   let golsA=0, golsB=0;
   const events=[];
 
+  /* -------- fouls / cards -------- */
+  const yellowCounts = {};       // playerId -> yellows so far this match
+  const sentOff = {};            // playerId -> minute sent off
+  const redMinutesA = [], redMinutesB = []; // sorted minutes A/B went a man down
+  function foulPool(side){ return side.onPitch.filter(p=>!(p.id in sentOff)); }
+  function pickFouler(side){
+    const pool = foulPool(side);
+    if(!pool.length) return null;
+    const weights = pool.map(p=> p.pos==='DF'?3:p.pos==='MF'?2.4:p.pos==='FW'?1.2:0.4);
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for(let i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return pool[i]; }
+    return pool[pool.length-1];
+  }
+  const totalCards = 1+Math.floor(Math.random()*4);
+  const maxCardMinute = opts.knockout ? 120 : 90;
+  for(let i=0;i<totalCards;i++){
+    const isA = Math.random()<0.5;
+    const side = isA?sideA:sideB;
+    const player = pickFouler(side);
+    if(!player) continue;
+    const minute = 1+Math.floor(Math.random()*maxCardMinute);
+    const straightRed = Math.random()<0.018;
+    if(straightRed){
+      sentOff[player.id]=minute;
+      (isA?redMinutesA:redMinutesB).push(minute);
+      events.push({min:minute,type:'card',card:'red',team:isA?'A':'B',player:player.name,playerId:player.id,reason:'straight'});
+    } else {
+      yellowCounts[player.id] = (yellowCounts[player.id]||0)+1;
+      if(yellowCounts[player.id]>=2){
+        sentOff[player.id]=minute;
+        (isA?redMinutesA:redMinutesB).push(minute);
+        events.push({min:minute,type:'card',card:'red',team:isA?'A':'B',player:player.name,playerId:player.id,reason:'second-yellow'});
+      } else {
+        events.push({min:minute,type:'card',card:'yellow',team:isA?'A':'B',player:player.name,playerId:player.id});
+      }
+    }
+  }
+  redMinutesA.sort((x,y)=>x-y); redMinutesB.sort((x,y)=>x-y);
+  function menDownAt(mins,minute){ return mins.filter(m=>m<=minute).length; }
+
   function playChances(n, minMin, maxMin){
     for(let i=0;i<n;i++){
       const minute = minMin+Math.floor(Math.random()*(maxMin-minMin+1));
-      const isA = Math.random() < (0.5+diff/280);
-      const own = isA?strA:strB, opp = isA?strB:strA;
+      const downA = menDownAt(redMinutesA,minute), downB = menDownAt(redMinutesB,minute);
+      const effStrA = strA*Math.pow(0.92,downA), effStrB = strB*Math.pow(0.92,downB);
+      const effDiff = effStrA-effStrB;
+      const isA = Math.random() < (0.5+effDiff/280);
+      const own = isA?effStrA:effStrB, opp = isA?effStrB:effStrA;
       let prob = Math.max(0.08, Math.min(0.6, 0.27+(own-opp)/170));
       prob += isA ? (trainAtkA-trainDefB)/100 : (trainAtkB-trainDefA)/100;
       prob = Math.max(0.05, Math.min(0.72, prob));
       if(Math.random()<prob){
-        const scorer = pickScorer(isA?sideA.onPitch:sideB.onPitch);
+        const eligible = (isA?sideA.onPitch:sideB.onPitch).filter(p=>!(p.id in sentOff) || sentOff[p.id]>minute);
+        const scorer = pickScorer(eligible.length?eligible:(isA?sideA.onPitch:sideB.onPitch));
         if(isA) golsA++; else golsB++;
         events.push({min:minute,type:'goal',team:isA?'A':'B',player:scorer?scorer.name:'Гравець'});
       }
@@ -1074,6 +1153,24 @@ function startUserMatch(oppKey){
         p.injured = Math.max(0,p.injured-1);
       }
     });
+    result.events.filter(e=>e.type==='card' && e.playerId).forEach(ev=>{
+      const p = CS.roster.find(x=>x.id===ev.playerId);
+      if(!p) return; // opponent card — not a persistent squad, nothing to track
+      if(ev.card==='red'){
+        p.injured = Math.max(p.injured||0,1);
+        p.banReason = 'suspension';
+        p.tournamentYellows = 0;
+        toast(p.name+' отримав червону картку — пропустить наступний матч');
+      } else {
+        p.tournamentYellows = (p.tournamentYellows||0)+1;
+        if(p.tournamentYellows>=2){
+          p.injured = Math.max(p.injured||0,1);
+          p.banReason = 'suspension';
+          p.tournamentYellows = 0;
+          toast(p.name+' — 2 жовті картки за турнір, дискваліфікація на 1 матч');
+        }
+      }
+    });
     recordCoachMatchResult(pending, result);
     let userWonPk = null;
     if(result.wentToPenalties) userWonPk = userIsA ? result.pkWinnerSide==='A' : result.pkWinnerSide==='B';
@@ -1105,6 +1202,11 @@ function runMatchScreen(oppKey, userIsA, result, onDone){
     } else if(ev.type==='injury'){
       text = '🚑 Травма: '+ev.player+' — вибуває на '+ev.dur+' матч(і)';
       row.className='evt injury';
+      row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
+    } else if(ev.type==='card'){
+      const teamName_ = ev.team==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent;
+      text = (ev.card==='red'?'🟥 Червона картка: ':'🟨 Жовта картка: ')+ev.player+' ('+teamName_+')'+(ev.reason==='second-yellow'?' — 2-га жовта!':'');
+      row.className='evt'+(ev.card==='red'?' injury':'');
       row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
     } else if(ev.type==='pk'){
       const winnerName = ev.pkWinnerSide==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent;
@@ -1163,8 +1265,13 @@ function showResult(oppKey, golsFor, golsAg, events, pk){
   document.getElementById('cResScore').textContent = golsFor+' : '+golsAg+(pk?' (пен. '+pk.pkFor+':'+pk.pkAg+')':'');
   document.getElementById('cResSub').textContent = teamName(CS.teamKey)+' проти '+teamName(oppKey);
   const injuries = events.filter(e=>e.type==='injury');
+  const cards = events.filter(e=>e.type==='card');
   const inj = document.getElementById('cResInjuries');
-  inj.innerHTML = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
+  let html = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
+  if(cards.length){
+    html += '<div class="sectionTitle">Картки матчу</div>'+cards.map(e=>'<div class="sub">'+(e.card==='red'?'🟥':'🟨')+' '+e.player+(e.card==='red'?' — вилучення':'')+'</div>').join('');
+  }
+  inj.innerHTML = html;
   showScreen('cScreenResult');
 }
 
