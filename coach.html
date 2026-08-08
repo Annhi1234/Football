@@ -87,6 +87,10 @@
   .fixture .fname{font-weight:700;font-size:12.5px;flex:1;}
   .fixture .fscore{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--gold);min-width:44px;text-align:center;}
   .fixture.played{opacity:.7;}
+  .fixture.qual{border-color:var(--gold);background:#3a2c0f33;}
+  .bmatch{display:flex;justify-content:space-between;gap:10px;background:#08170ecc;border:1px solid #2c5b3d55;border-radius:8px;padding:9px 10px;margin-top:7px;font-size:12.5px;}
+  .bmatch.userin{border-color:var(--gold);}
+  .bmatch .w{color:var(--gold);font-weight:800;}
 
   .trainCard{background:#08170ecc;border:1px solid #2c5b3d55;border-radius:12px;padding:14px;margin-top:10px;cursor:pointer;}
   .trainCard:active{transform:scale(.98);}
@@ -129,11 +133,11 @@
 <div id="cScreenHow" class="screen hidden">
   <div class="logo h1" style="font-size:24px">ЯК ЦЕ ПРАЦЮЄ</div>
   <div class="panel">
-    <p><b>1. Збірна.</b> Обери одну з трьох збірних: Англія, Україна, Швеція.</p>
+    <p><b>1. Збірна.</b> Обери одну з доступних збірних з реальними гравцями: Англія, Україна або Швеція.</p>
     <p><b>2. Склад.</b> З повного ростеру обери 11 гравців в основу (1 ВР, 4 ЗХ, 4 ПЗ, 2 НП) та 5 у запас. На трансферному ринку можна підписати вільних агентів замість слабших гравців.</p>
     <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка або відпочинок. Це впливає на форму й ризик травм.</p>
-    <p><b>4. Матчі.</b> Твоя збірна грає міні-турнір проти двох інших. Гравці можуть отримувати травми і випадати на 1-2 матчі — тоді потрібна заміна зі складу.</p>
-    <p><b>5. Чемпіон.</b> Найбільше очок після всіх матчів — чемпіон міні-турніру.</p>
+    <p><b>4. Чемпіонат світу.</b> Спочатку 8 груп по 4 команди. Твоя збірна грає 3 матчі групового етапу, інші матчі симулюються.</p>
+    <p><b>5. Плей-оф.</b> Топ-2 з групи виходять у 1/8 фіналу, потім 1/4, 1/2 і фінал. У плей-оф нічия автоматично вирішується додатковим голом.</p>
   </div>
   <button class="btn" id="cBtnHowBack">Назад</button>
 </div>
@@ -141,7 +145,7 @@
 <!-- ============ TEAM PICK ============ -->
 <div id="cScreenTeam" class="screen hidden">
   <div class="logo h1" style="font-size:22px">ОБЕРИ ЗБІРНУ</div>
-  <div class="sub">3 збірні • міні-турнір у 3 тури</div>
+  <div class="sub">Чемпіонат світу • групи → плей-оф → фінал</div>
   <div class="grid-teams" id="cTeamGrid"></div>
 </div>
 
@@ -173,7 +177,7 @@
 
 <!-- ============ HUB (standings/fixtures) ============ -->
 <div id="cScreenHub" class="screen hidden">
-  <div class="logo h1" style="font-size:22px">МІНІ-ТУРНІР</div>
+  <div class="logo h1" style="font-size:22px" id="cHubTitle">ЧЕМПІОНАТ СВІТУ</div>
   <div class="sub" id="cHubSub"></div>
   <div class="panel" style="max-width:640px;">
     <div class="sectionTitle">Турнірна таблиця</div>
@@ -225,12 +229,20 @@
 
 <!-- ============ CHAMPION ============ -->
 <div id="cScreenChamp" class="screen hidden">
-  <div class="logo h1" style="font-size:30px">🏆 ЧЕМПІОН ТУРНІРУ!</div>
+  <div class="logo h1" style="font-size:30px">🏆 ЧЕМПІОНИ СВІТУ!</div>
   <div class="sub" id="cChampSub"></div>
   <div class="panel" style="max-width:520px;">
     <table class="tbl" id="cChampTable"></table>
   </div>
   <button class="btn gold" id="cBtnRestart">Новий сезон</button>
+</div>
+
+<div id="cScreenOut" class="screen hidden">
+  <div class="logo h1" style="font-size:26px">ВИЛІТ З ТУРНІРУ</div>
+  <div class="panel" style="max-width:560px;text-align:center;">
+    <div class="sub" id="cOutSub" style="margin:0;"></div>
+  </div>
+  <button class="btn gold" id="cBtnRestartOut">Спробувати знову</button>
 </div>
 
 <div class="toast" id="cToast"></div>
@@ -328,6 +340,44 @@ const FREE_AGENTS = [
   {name:'Benjamin Sesko',club:'RB Leipzig',pos:'FW',ovr:85,age:23},
   {name:'Rasmus Hojlund',club:'Manchester United',pos:'FW',ovr:82,age:23},
 ];
+
+const WORLD_TEAMS = [
+  {key:'BRA', name:'Бразилія', color:'#ffe000', color2:'#009b3a', group:'A', rating:92},
+  {key:'ARG', name:'Аргентина', color:'#6cb2e6', color2:'#ffffff', group:'A', rating:91},
+  {key:'SUI', name:'Швейцарія', color:'#e3212b', color2:'#ffffff', group:'A', rating:78},
+  {key:'GHA', name:'Гана', color:'#1c8a4a', color2:'#fcd116', group:'A', rating:74},
+  {key:'FRA', name:'Франція', color:'#1e50a2', color2:'#ffffff', group:'B', rating:90},
+  {key:'DEN', name:'Данія', color:'#c8102e', color2:'#ffffff', group:'B', rating:80},
+  {key:'TUN', name:'Туніс', color:'#e70013', color2:'#ffffff', group:'B', rating:72},
+  {key:'AUS', name:'Австралія', color:'#ffcd00', color2:'#00843d', group:'B', rating:73},
+  {key:'ESP', name:'Іспанія', color:'#aa151b', color2:'#f1bf00', group:'C', rating:89},
+  {key:'JPN', name:'Японія', color:'#1d2b6c', color2:'#ffffff', group:'C', rating:79},
+  {key:'MAR', name:'Марокко', color:'#c1272d', color2:'#006233', group:'C', rating:81},
+  {key:'CAN', name:'Канада', color:'#e8112d', color2:'#ffffff', group:'C', rating:75},
+  {key:'ENG', name:'Англія', color:'#dedede', color2:'#c8102e', group:'D', rating:88},
+  {key:'USA', name:'США', color:'#3c3b6e', color2:'#b22234', group:'D', rating:78},
+  {key:'IRN', name:'Іран', color:'#239f40', color2:'#ffffff', group:'D', rating:74},
+  {key:'WAL', name:'Уельс', color:'#c8102e', color2:'#00a650', group:'D', rating:73},
+  {key:'GER', name:'Німеччина', color:'#2b2b2b', color2:'#ffce00', group:'E', rating:87},
+  {key:'CRO', name:'Хорватія', color:'#ff3333', color2:'#ffffff', group:'E', rating:83},
+  {key:'CRC', name:'Коста-Рика', color:'#002b7f', color2:'#ce1126', group:'E', rating:71},
+  {key:'CMR', name:'Камерун', color:'#1c8a4a', color2:'#ce1126', group:'E', rating:73},
+  {key:'BEL', name:'Бельгія', color:'#ed2939', color2:'#fae042', group:'F', rating:85},
+  {key:'SRB', name:'Сербія', color:'#c6363c', color2:'#0c4076', group:'F', rating:77},
+  {key:'MEX', name:'Мексика', color:'#0a8a43', color2:'#ce1126', group:'F', rating:76},
+  {key:'GUA', name:'Гватемала', color:'#4997d0', color2:'#ffffff', group:'F', rating:66},
+  {key:'POR', name:'Португалія', color:'#9a2020', color2:'#006600', group:'G', rating:86},
+  {key:'URU', name:'Уругвай', color:'#5aa9e6', color2:'#ffffff', group:'G', rating:82},
+  {key:'SEN', name:'Сенегал', color:'#00853f', color2:'#fdef42', group:'G', rating:77},
+  {key:'KOR', name:'Пд. Корея', color:'#dedede', color2:'#c60c30', group:'G', rating:75},
+  {key:'NED', name:'Нідерланди', color:'#ff6a00', color2:'#ffffff', group:'H', rating:85},
+  {key:'UKR', name:'Україна', color:'#0057b7', color2:'#ffd700', group:'H', rating:82},
+  {key:'SWE', name:'Швеція', color:'#006aa7', color2:'#fecc02', group:'H', rating:84},
+  {key:'QAT', name:'Катар', color:'#8a1538', color2:'#ffffff', group:'H', rating:68},
+];
+const WORLD_TEAM_MAP = {};
+WORLD_TEAMS.forEach(t=>{ WORLD_TEAM_MAP[t.key]=t; });
+
 const POS_LABEL = {GK:'Воротар',DF:'Захисник',MF:'Півзахисник',FW:'Нападник'};
 const POS_ORDER = ['GK','DF','MF','FW'];
 const STARTER_QUOTA = {GK:1,DF:4,MF:4,FW:2}; // 11 total
@@ -352,8 +402,13 @@ const CS = {
   freeAgents:[],
   fixtures:[],         // {a,b,played,ga,gb}
   table:{},            // key -> {pts,w,d,l,gf,ga}
+  groups:{},
+  fixturesDone:{},
+  stage:'group',
+  bracket:[],
   trainBonus:{atk:0,def:0},
   pendingFixtureIdx:null,
+  pendingMatch:null,
   matchTimer:null,
   tournamentStarted:false,
 };
@@ -363,7 +418,8 @@ function otherTeams(){ return Object.keys(ROSTERS).filter(k=>k!==CS.teamKey); }
 function resetState(){
   CS.teamKey=null; CS.roster=[]; CS.starters=[]; CS.bench=[];
   CS.freeAgents = FREE_AGENTS.map(p=>({...p,id:'fa'+(uid++)}));
-  CS.fixtures=[]; CS.table={}; CS.trainBonus={atk:0,def:0}; CS.pendingFixtureIdx=null; CS.tournamentStarted=false;
+  CS.fixtures=[]; CS.table={}; CS.groups={}; CS.fixturesDone={}; CS.stage='group'; CS.bracket=[];
+  CS.trainBonus={atk:0,def:0}; CS.pendingFixtureIdx=null; CS.pendingMatch=null; CS.tournamentStarted=false;
 }
 resetState();
 
@@ -400,7 +456,6 @@ function selectTeam(key){
   resetState();
   CS.teamKey=key;
   CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100}));
-  buildFixtures();
   buildRosterList();
   showScreen('cScreenSquad');
 }
@@ -493,7 +548,7 @@ document.getElementById('cBtnAutoSquad').onclick = ()=>{
 };
 document.getElementById('cBtnSquadNext').onclick = ()=>{
   if(!CS.tournamentStarted){
-    buildTable();
+    initWorldCup();
     CS.tournamentStarted = true;
   }
   renderHub();
@@ -540,37 +595,131 @@ function openSignFlow(fa){
 }
 
 /* ========================================================================
-   FIXTURES / TABLE
+   WORLD CUP / TABLES / BRACKET
    ======================================================================== */
-function buildFixtures(){
-  const keys = Object.keys(ROSTERS);
-  CS.fixtures = [];
-  for(let i=0;i<keys.length;i++) for(let j=i+1;j<keys.length;j++){
-    CS.fixtures.push({a:keys[i],b:keys[j],played:false,ga:0,gb:0});
+function teamDef(key){ return ROSTERS[key] || WORLD_TEAM_MAP[key]; }
+function teamName(key){ const t=teamDef(key); return t?t.name:key; }
+function teamRating(key){
+  if(ROSTERS[key]){
+    const players = ROSTERS[key].players;
+    return Math.round(players.reduce((s,p)=>s+p.ovr,0)/players.length);
   }
-  // ensure user's fixtures are addressed first
-  CS.fixtures.sort((f)=> (f.a===CS.teamKey||f.b===CS.teamKey)?-1:1);
+  return (WORLD_TEAM_MAP[key] && WORLD_TEAM_MAP[key].rating) || 74;
 }
-function buildTable(){
-  CS.table = {};
-  Object.keys(ROSTERS).forEach(k=> CS.table[k]={pts:0,w:0,d:0,l:0,gf:0,ga:0});
+function botSquad(key){
+  const rating = teamRating(key);
+  const ages = [28,25,30,24,27,29,22,31,26,28,24,30,21,27,25,29,23,28,26,24];
+  const names = ['Воротар','Дублер','Захисник 1','Захисник 2','Захисник 3','Захисник 4','Захисник 5','Захисник 6','Плеймейкер','Опорник','Хавбек 1','Хавбек 2','Хавбек 3','Хавбек 4','Вінгер','Форвард 1','Форвард 2','Форвард 3','Нападник','Джокер'];
+  const pos = ['GK','GK','DF','DF','DF','DF','DF','DF','MF','MF','MF','MF','MF','MF','MF','FW','FW','FW','FW','FW'];
+  return names.map((n,i)=>({name:teamName(key)+' '+n,pos:pos[i],ovr:Math.max(60,Math.min(94,rating+(i%5)-2)),age:ages[i],injured:0,stamina:90}));
 }
-function applyResultToTable(a,b,ga,gb){
-  const ta=CS.table[a], tb=CS.table[b];
-  ta.gf+=ga; ta.ga+=gb; tb.gf+=gb; tb.ga+=ga;
-  if(ga>gb){ta.w++;ta.pts+=3;tb.l++;}
-  else if(gb>ga){tb.w++;tb.pts+=3;ta.l++;}
-  else {ta.d++;tb.d++;ta.pts++;tb.pts++;}
+function teamPlayers(key){ return ROSTERS[key] ? ROSTERS[key].players : botSquad(key); }
+function initWorldCup(){
+  CS.groups = {};
+  'ABCDEFGH'.split('').forEach(g=>{
+    const keys = WORLD_TEAMS.filter(t=>t.group===g).map(t=>t.key);
+    const table = {};
+    keys.forEach(k=>table[k]={pts:0,w:0,d:0,l:0,gf:0,ga:0});
+    CS.groups[g] = {teams:keys, table};
+  });
+  CS.fixturesDone = {};
+  CS.stage = 'group';
+  CS.bracket = [];
 }
-function standingsArray(){
-  return Object.keys(CS.table).sort((x,y)=>{
-    const tx=CS.table[x], ty=CS.table[y];
-    if(ty.pts!==tx.pts) return ty.pts-tx.pts;
-    return (ty.gf-ty.ga)-(tx.gf-tx.ga);
+function fixtureKey(a,b){ return a<b? a+'-'+b : b+'-'+a; }
+function groupFixtures(g){
+  const ids = CS.groups[g].teams;
+  const pairs = [];
+  for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++) pairs.push([ids[i],ids[j]]);
+  return pairs;
+}
+function groupMatchdays(g){
+  const [A,B,C,D] = CS.groups[g].teams;
+  return [ [[A,B],[C,D]], [[A,C],[D,B]], [[A,D],[B,C]] ];
+}
+function partnerFixture(g, idA, idB){
+  for(const round of groupMatchdays(g)){
+    const mine = round.find(([x,y])=> (x===idA&&y===idB)||(x===idB&&y===idA));
+    if(mine) return round.find(pair=>pair!==mine);
+  }
+  return null;
+}
+function recordGroupResult(g, a, b, ga, gb){
+  const key = fixtureKey(a,b);
+  if(CS.fixturesDone[key]) return;
+  CS.fixturesDone[key] = {a,b,ga,gb};
+  const tbl = CS.groups[g].table;
+  tbl[a].gf+=ga; tbl[a].ga+=gb;
+  tbl[b].gf+=gb; tbl[b].ga+=ga;
+  if(ga>gb){ tbl[a].w++; tbl[a].pts+=3; tbl[b].l++; }
+  else if(gb>ga){ tbl[b].w++; tbl[b].pts+=3; tbl[a].l++; }
+  else { tbl[a].d++; tbl[b].d++; tbl[a].pts++; tbl[b].pts++; }
+}
+function groupStandingsArray(g){
+  const tbl = CS.groups[g].table;
+  return CS.groups[g].teams.slice().sort((x,y)=>{
+    const A=tbl[x], B=tbl[y];
+    if(B.pts!==A.pts) return B.pts-A.pts;
+    const gdA=A.gf-A.ga, gdB=B.gf-B.ga;
+    if(gdB!==gdA) return gdB-gdA;
+    if(B.gf!==A.gf) return B.gf-A.gf;
+    return teamRating(y)-teamRating(x);
   });
 }
-
-/* ========================================================================
+function userGroup(){ return WORLD_TEAM_MAP[CS.teamKey].group; }
+function userGroupFixtures(){
+  const g = userGroup();
+  return groupFixtures(g).filter(([a,b])=>a===CS.teamKey||b===CS.teamKey);
+}
+function simulateRemainingGroupMatches(){
+  Object.keys(CS.groups).forEach(g=>{
+    groupFixtures(g).forEach(([a,b])=>{
+      if(a!==CS.teamKey && b!==CS.teamKey && !CS.fixturesDone[fixtureKey(a,b)]){
+        const [ga,gb] = simInstant(a,b);
+        recordGroupResult(g,a,b,ga,gb);
+      }
+    });
+  });
+}
+function buildKnockoutFromGroups(){
+  const winners = {}, runners = {};
+  'ABCDEFGH'.split('').forEach(g=>{
+    const arr = groupStandingsArray(g);
+    winners[g]=arr[0]; runners[g]=arr[1];
+  });
+  const pairs = [
+    [winners.A, runners.B],[winners.C, runners.D],
+    [winners.B, runners.A],[winners.D, runners.C],
+    [winners.E, runners.F],[winners.G, runners.H],
+    [winners.F, runners.E],[winners.H, runners.G],
+  ];
+  CS.bracket = pairs.map(([a,b])=>({a,b,ga:null,gb:null,winner:null}));
+  CS.stage = 'r16';
+}
+function advanceBracketRound(){
+  const winners = CS.bracket.map(m=>m.winner);
+  const next = [];
+  for(let i=0;i<winners.length;i+=2) next.push({a:winners[i], b:winners[i+1], ga:null, gb:null, winner:null});
+  CS.bracket = next;
+  if(CS.stage==='r16') CS.stage='qf';
+  else if(CS.stage==='qf') CS.stage='sf';
+  else if(CS.stage==='sf') CS.stage='final';
+}
+function resolveKnockoutScore(a,b,ga,gb){
+  if(ga!==gb) return {ga,gb,winner:ga>gb?a:b,extra:false};
+  const pa = teamRating(a)/(teamRating(a)+teamRating(b));
+  if(Math.random()<pa) return {ga:ga+1,gb,winner:a,extra:true};
+  return {ga,gb:gb+1,winner:b,extra:true};
+}
+function simulateNonUserBracketMatches(){
+  CS.bracket.forEach(m=>{
+    if(m.winner || m.a===CS.teamKey || m.b===CS.teamKey) return;
+    const [ga0,gb0] = simInstant(m.a,m.b);
+    const r = resolveKnockoutScore(m.a,m.b,ga0,gb0);
+    m.ga=r.ga; m.gb=r.gb; m.winner=r.winner;
+  });
+}
+function stageLabel(){ return ({group:'ГРУПОВИЙ ЕТАП',r16:'1/8 ФІНАЛУ',qf:'1/4 ФІНАЛУ',sf:'1/2 ФІНАЛУ',final:'ФІНАЛ'})[CS.stage] || 'ЧЕМПІОНАТ СВІТУ'; }/* ========================================================================
    BEST XI helper for bot teams
    ======================================================================== */
 function bestXI(players){
@@ -601,74 +750,135 @@ function autoFixUserLineup(){
    HUB
    ======================================================================== */
 function renderHub(){
-  // auto-simulate fixtures that don't involve the user's team
-  let idx = CS.fixtures.findIndex(f=>!f.played);
-  while(idx!==-1 && CS.fixtures[idx].a!==CS.teamKey && CS.fixtures[idx].b!==CS.teamKey){
-    const f = CS.fixtures[idx];
-    const [ga,gb] = simInstant(f.a,f.b);
-    f.played=true; f.ga=ga; f.gb=gb;
-    applyResultToTable(f.a,f.b,ga,gb);
-    idx = CS.fixtures.findIndex(x=>!x.played);
-  }
-
-  document.getElementById('cHubSub').textContent = ROSTERS[CS.teamKey].name+' • міні-турнір із 3 команд';
+  if(CS.stage==='group') renderGroupHub();
+  else renderBracketHub();
+}
+function renderGroupHub(){
+  const g = userGroup();
+  document.getElementById('cHubTitle').textContent = 'ГРУПОВИЙ ЕТАП';
+  document.getElementById('cHubSub').textContent = 'Група '+g+' • '+teamName(CS.teamKey)+' • топ-2 виходять у плей-оф';
 
   const tbl = document.getElementById('cTable');
   let html = '<tr><th style="text-align:left">Команда</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>РМ</th><th>О</th></tr>';
-  standingsArray().forEach(k=>{
-    const t = CS.table[k]; const played = t.w+t.d+t.l;
-    html += '<tr class="'+(k===CS.teamKey?'me':'')+'"><td class="name">'+ROSTERS[k].name+'</td><td>'+played+'</td><td>'+t.w+'</td><td>'+t.d+'</td><td>'+t.l+'</td><td>'+(t.gf-t.ga)+'</td><td>'+t.pts+'</td></tr>';
+  groupStandingsArray(g).forEach((k,pos)=>{
+    const t = CS.groups[g].table[k]; const played = t.w+t.d+t.l;
+    html += '<tr class="'+(k===CS.teamKey?'me ':'')+(pos<2?'qual':'')+'"><td class="name">'+teamName(k)+'</td><td>'+played+'</td><td>'+t.w+'</td><td>'+t.d+'</td><td>'+t.l+'</td><td>'+(t.gf-t.ga)+'</td><td>'+t.pts+'</td></tr>';
   });
   tbl.innerHTML = html;
 
   const fx = document.getElementById('cFixtures');
   fx.innerHTML='';
-  CS.fixtures.forEach(f=>{
+  const myFixtures = userGroupFixtures();
+  let nextMatch = null;
+  myFixtures.forEach(([a,b])=>{
+    const oppKey = a===CS.teamKey? b : a;
+    const done = CS.fixturesDone[fixtureKey(a,b)];
     const div = document.createElement('div');
-    div.className='fixture'+(f.played?' played':'');
-    div.innerHTML = '<span class="fname">'+ROSTERS[f.a].name+'</span><span class="fscore mono">'+(f.played?(f.ga+' - '+f.gb):'vs')+'</span><span class="fname" style="text-align:right">'+ROSTERS[f.b].name+'</span>';
+    div.className = 'fixture'+(done?' played':'');
+    if(done){
+      const myScore = done.a===CS.teamKey? done.ga : done.gb;
+      const oppScore = done.a===CS.teamKey? done.gb : done.ga;
+      div.innerHTML = '<span class="fname">'+teamName(CS.teamKey)+'</span><span class="fscore mono">'+myScore+' - '+oppScore+'</span><span class="fname" style="text-align:right">'+teamName(oppKey)+'</span>';
+    } else {
+      div.innerHTML = '<span class="fname">'+teamName(CS.teamKey)+'</span><span class="fscore mono">vs</span><span class="fname" style="text-align:right">'+teamName(oppKey)+'</span>';
+      if(!nextMatch) nextMatch = {a,b,oppKey};
+    }
     fx.appendChild(div);
   });
 
   const btnWrap = document.getElementById('cHubBtns');
   btnWrap.innerHTML='';
-  const nextUser = CS.fixtures.findIndex(f=>!f.played && (f.a===CS.teamKey||f.b===CS.teamKey));
-  if(nextUser!==-1){
-    CS.pendingFixtureIdx = nextUser;
-    const f = CS.fixtures[nextUser];
-    const oppKey = f.a===CS.teamKey? f.b : f.a;
+  if(nextMatch){
+    CS.pendingMatch = {stage:'group', a:nextMatch.a, b:nextMatch.b, oppKey:nextMatch.oppKey};
     const b1 = document.createElement('button');
     b1.className='btn gold';
-    b1.textContent = 'Тренування перед матчем: '+ROSTERS[oppKey].name;
-    b1.onclick = ()=>{ openTraining(oppKey); };
+    b1.textContent = 'Тренування перед матчем: '+teamName(nextMatch.oppKey);
+    b1.onclick = ()=>{ openTraining(nextMatch.oppKey); };
     btnWrap.appendChild(b1);
-    const b2 = document.createElement('button');
-    b2.className='btn ghost small';
-    b2.textContent = 'Скоригувати склад';
-    b2.onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
-    btnWrap.appendChild(b2);
   } else {
+    const allGroupDone = groupFixtures(g).every(([a,b])=>CS.fixturesDone[fixtureKey(a,b)]);
+    if(!allGroupDone){ simulateRemainingGroupMatches(); renderGroupHub(); return; }
+    const standings = groupStandingsArray(g);
+    const pos = standings.indexOf(CS.teamKey);
     const b = document.createElement('button');
     b.className='btn gold';
-    b.textContent='Підсумки турніру';
-    b.onclick = showChampion;
+    b.textContent = pos<2 ? 'До 1/8 фіналу →' : 'Переглянути результат';
+    b.onclick = ()=>{
+      if(pos>=2){ showEliminated('Ви посіли '+(pos+1)+' місце у групі '+g+' і не вийшли в плей-оф.'); return; }
+      simulateRemainingGroupMatches();
+      buildKnockoutFromGroups();
+      simulateNonUserBracketMatches();
+      renderHub();
+    };
     btnWrap.appendChild(b);
   }
+  addHubSquadButton(btnWrap);
   showScreen('cScreenHub');
 }
+function renderBracketHub(){
+  document.getElementById('cHubTitle').textContent = stageLabel();
+  document.getElementById('cHubSub').textContent = teamName(CS.teamKey)+' • '+(CS.stage==='final'?'останній матч':'плей-оф');
+  document.getElementById('cTable').innerHTML = '<tr><th style="text-align:left">Стадія</th><th>Команд</th></tr><tr class="me"><td class="name">'+stageLabel()+'</td><td>'+({r16:16,qf:8,sf:4,final:2}[CS.stage]||0)+'</td></tr>';
 
+  const fx = document.getElementById('cFixtures');
+  fx.innerHTML='';
+  let userMatch = null;
+  CS.bracket.forEach(m=>{
+    const row = document.createElement('div');
+    const involvesUser = m.a===CS.teamKey || m.b===CS.teamKey;
+    if(involvesUser) userMatch = m;
+    row.className = 'bmatch'+(involvesUser?' userin':'');
+    const score = m.winner ? (m.ga+' - '+m.gb) : 'vs';
+    row.innerHTML = '<span class="'+(m.winner===m.a?'w':'')+'">'+teamName(m.a)+'</span><span class="mono">'+score+'</span><span class="'+(m.winner===m.b?'w':'')+'">'+teamName(m.b)+'</span>';
+    fx.appendChild(row);
+  });
+
+  const btnWrap = document.getElementById('cHubBtns');
+  btnWrap.innerHTML='';
+  if(userMatch && !userMatch.winner){
+    const oppKey = userMatch.a===CS.teamKey? userMatch.b : userMatch.a;
+    CS.pendingMatch = {stage:CS.stage, a:userMatch.a, b:userMatch.b, oppKey};
+    const b = document.createElement('button');
+    b.className='btn gold';
+    b.textContent = 'Тренування: '+stageLabel()+' проти '+teamName(oppKey);
+    b.onclick = ()=>{ openTraining(oppKey); };
+    btnWrap.appendChild(b);
+  } else if(CS.bracket.every(m=>m.winner)){
+    if(CS.stage==='final'){
+      const champ = CS.bracket[0].winner;
+      const b = document.createElement('button');
+      b.className='btn gold';
+      b.textContent = champ===CS.teamKey ? 'Отримати трофей 🏆' : 'Переглянути результат';
+      b.onclick = ()=> champ===CS.teamKey ? showChampion() : showEliminated('Ви програли у фіналі. Рахунок: '+CS.bracket[0].ga+' - '+CS.bracket[0].gb+'.');
+      btnWrap.appendChild(b);
+    } else {
+      const b = document.createElement('button');
+      b.className='btn gold';
+      b.textContent = 'Наступний раунд →';
+      b.onclick = ()=>{ advanceBracketRound(); simulateNonUserBracketMatches(); renderHub(); };
+      btnWrap.appendChild(b);
+    }
+  }
+  addHubSquadButton(btnWrap);
+  showScreen('cScreenHub');
+}
+function addHubSquadButton(btnWrap){
+  const b2 = document.createElement('button');
+  b2.className='btn ghost small';
+  b2.textContent = 'Скоригувати склад';
+  b2.onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
+  btnWrap.appendChild(b2);
+}
 function simInstant(aKey,bKey){
-  const A = bestXI(ROSTERS[aKey].players.map(p=>({...p,injured:0})));
-  const B = bestXI(ROSTERS[bKey].players.map(p=>({...p,injured:0})));
+  const A = bestXI(teamPlayers(aKey).map(p=>({...p,injured:0})));
+  const B = bestXI(teamPlayers(bKey).map(p=>({...p,injured:0})));
   const res = simulateMatch({onPitch:A,isUser:false,trainAtk:0,trainDef:0,avgStamina:90},{onPitch:B,isUser:false,trainAtk:0,trainDef:0,avgStamina:90});
   return [res.golsA,res.golsB];
-}
-
-/* ========================================================================
+}/* ========================================================================
    TRAINING
    ======================================================================== */
 function openTraining(oppKey){
-  document.getElementById('cTrainingSub').textContent = 'Перед матчем проти '+ROSTERS[oppKey].name;
+  document.getElementById('cTrainingSub').textContent = 'Перед матчем проти '+teamName(oppKey);
   const wrap = document.getElementById('cTrainingCards');
   wrap.innerHTML='';
   TRAININGS.forEach(t=>{
@@ -751,16 +961,39 @@ function simulateMatch(sideA,sideB){
   return {golsA,golsB,events};
 }
 
+function recordCoachMatchResult(pending, result){
+  const ga = pending.a===CS.teamKey ? result.golsA : result.golsB;
+  const gb = pending.a===CS.teamKey ? result.golsB : result.golsA;
+  if(pending.stage==='group'){
+    recordGroupResult(userGroup(), pending.a, pending.b, ga, gb);
+    const partner = partnerFixture(userGroup(), pending.a, pending.b);
+    if(partner && !CS.fixturesDone[fixtureKey(partner[0],partner[1])]){
+      const [pga,pgb] = simInstant(partner[0],partner[1]);
+      recordGroupResult(userGroup(), partner[0], partner[1], pga, pgb);
+    }
+    return;
+  }
+  const match = CS.bracket.find(m=>m.a===pending.a && m.b===pending.b && !m.winner);
+  if(!match) return;
+  const resolved = resolveKnockoutScore(pending.a, pending.b, ga, gb);
+  match.ga = resolved.ga;
+  match.gb = resolved.gb;
+  match.winner = resolved.winner;
+  if(resolved.extra){
+    result.events.push({min:120,type:'goal',team:resolved.winner===pending.a?'A':'B',player:'Додатковий час'});
+  }
+}
+
 function startUserMatch(oppKey){
   const recoveringBeforeMatch = new Set(CS.roster.filter(p=>p.injured>0).map(p=>p.id));
   autoFixUserLineup();
   const userOnPitch = CS.starters.map(id=>playerById(id));
-  const oppPlayers = ROSTERS[oppKey].players.map(p=>({...p,injured:0}));
+  const oppPlayers = teamPlayers(oppKey).map(p=>({...p,injured:0}));
   const oppOnPitch = bestXI(oppPlayers);
   const avgStamina = Math.round(userOnPitch.reduce((s,p)=>s+p.stamina,0)/userOnPitch.length);
 
-  const f = CS.fixtures[CS.pendingFixtureIdx];
-  const userIsA = f.a===CS.teamKey;
+  const pending = CS.pendingMatch;
+  const userIsA = pending.a===CS.teamKey;
 
   const sideUser = {onPitch:userOnPitch,isUser:true,trainAtk:CS.trainBonus.atk,trainDef:CS.trainBonus.def,avgStamina};
   const sideOpp  = {onPitch:oppOnPitch,isUser:false,trainAtk:0,trainDef:0,avgStamina:88};
@@ -773,24 +1006,21 @@ function startUserMatch(oppKey){
   userOnPitch.forEach(p=>{ if(p.injured===0) p.stamina = Math.max(15,p.stamina-(30+Math.floor(Math.random()*15))); });
 
   runMatchScreen(oppKey, userIsA, result, ()=>{
-    f.played = true;
-    f.ga = userIsA? result.golsA : result.golsB;
-    f.gb = userIsA? result.golsB : result.golsA;
-    applyResultToTable(f.a,f.b,f.ga,f.gb);
     const newInjuryIds = new Set(result.events.filter(e=>e.type==='injury' && e.playerId).map(e=>e.playerId));
     CS.roster.forEach(p=>{
       if(recoveringBeforeMatch.has(p.id) && !newInjuryIds.has(p.id) && p.injured>0){
         p.injured = Math.max(0,p.injured-1);
       }
     });
+    recordCoachMatchResult(pending, result);
     showResult(oppKey, golsFor, golsAg, result.events);
   });
 }
 
 function runMatchScreen(oppKey, userIsA, result, onDone){
-  document.getElementById('cMatchLabel').textContent = 'МАТЧ • '+ROSTERS[CS.teamKey].name+' — '+ROSTERS[oppKey].name;
-  document.getElementById('cMTeamA').textContent = userIsA? ROSTERS[CS.teamKey].name : ROSTERS[oppKey].name;
-  document.getElementById('cMTeamB').textContent = userIsA? ROSTERS[oppKey].name : ROSTERS[CS.teamKey].name;
+  document.getElementById('cMatchLabel').textContent = 'МАТЧ • '+teamName(CS.teamKey)+' — '+teamName(oppKey);
+  document.getElementById('cMTeamA').textContent = userIsA? teamName(CS.teamKey) : teamName(oppKey);
+  document.getElementById('cMTeamB').textContent = userIsA? teamName(oppKey) : teamName(CS.teamKey);
   document.getElementById('cMScore').textContent = '0 : 0';
   document.getElementById('cMClock').textContent = "0'";
   document.getElementById('cMLog').innerHTML='';
@@ -850,7 +1080,7 @@ function runMatchScreen(oppKey, userIsA, result, onDone){
 function showResult(oppKey, golsFor, golsAg, events){
   document.getElementById('cResTitle').textContent = golsFor>golsAg?'ПЕРЕМОГА!':golsFor<golsAg?'ПОРАЗКА':'НІЧИЯ';
   document.getElementById('cResScore').textContent = golsFor+' : '+golsAg;
-  document.getElementById('cResSub').textContent = ROSTERS[CS.teamKey].name+' проти '+ROSTERS[oppKey].name;
+  document.getElementById('cResSub').textContent = teamName(CS.teamKey)+' проти '+teamName(oppKey);
   const injuries = events.filter(e=>e.type==='injury');
   const inj = document.getElementById('cResInjuries');
   inj.innerHTML = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
@@ -858,19 +1088,30 @@ function showResult(oppKey, golsFor, golsAg, events){
 }
 
 document.getElementById('cBtnAdjustSquad').onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
-document.getElementById('cBtnResultCont').onclick = ()=>{ renderHub(); };
+document.getElementById('cBtnResultCont').onclick = ()=>{
+  if(CS.pendingMatch && CS.pendingMatch.stage!=='group'){
+    const m = CS.bracket.find(x=>x.a===CS.pendingMatch.a && x.b===CS.pendingMatch.b);
+    if(m && m.winner!==CS.teamKey){
+      showEliminated('Ви вибули на стадії «'+stageLabel()+'». Рахунок: '+m.ga+' - '+m.gb+'.');
+      return;
+    }
+  }
+  renderHub();
+};
 
 /* ========================================================================
    CHAMPION
    ======================================================================== */
 function showChampion(){
-  const standings = standingsArray();
-  const champKey = standings[0];
-  document.getElementById('cChampSub').textContent = champKey===CS.teamKey?
-    (ROSTERS[CS.teamKey].name+' — чемпіони міні-турніру! Вітаємо, тренере!') :
-    ('Турнір виграла '+ROSTERS[champKey].name+'. '+ROSTERS[CS.teamKey].name+' фінішували '+(standings.indexOf(CS.teamKey)+1)+'.');
-  document.getElementById('cChampTable').innerHTML = document.getElementById('cTable').innerHTML;
+  document.getElementById('cChampSub').textContent = teamName(CS.teamKey)+' — чемпіони світу! Вітаємо, тренере!';
+  document.getElementById('cChampTable').innerHTML =
+    '<tr><th style="text-align:left">Фінал</th><th>Рахунок</th></tr>'+
+    '<tr class="me"><td class="name">'+teamName(CS.bracket[0].a)+' — '+teamName(CS.bracket[0].b)+'</td><td>'+CS.bracket[0].ga+' - '+CS.bracket[0].gb+'</td></tr>';
   showScreen('cScreenChamp');
+}
+function showEliminated(text){
+  document.getElementById('cOutSub').textContent = text;
+  showScreen('cScreenOut');
 }
 
 /* ========================================================================
@@ -880,9 +1121,12 @@ document.getElementById('cBtnStart').onclick = ()=>{ buildTeamGrid(); showScreen
 document.getElementById('cBtnHow').onclick = ()=> showScreen('cScreenHow');
 document.getElementById('cBtnHowBack').onclick = ()=> showScreen('cScreenMenu');
 document.getElementById('cBtnRestart').onclick = ()=>{ resetState(); showScreen('cScreenMenu'); };
+document.getElementById('cBtnRestartOut').onclick = ()=>{ resetState(); showScreen('cScreenMenu'); };
 
 })();
 </script>
 </body>
 </html>
+
+
 
