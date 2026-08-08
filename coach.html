@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
@@ -154,6 +154,7 @@
     <div id="cRosterList"></div>
   </div>
   <div class="rowbtns">
+    <button class="btn ghost small" id="cBtnAutoSquad">Автосклад</button>
     <button class="btn ghost small" id="cBtnTransfer">Трансферний ринок</button>
     <button class="btn ghost small" id="cBtnSquadBack">Змінити збірну</button>
     <button class="btn gold" id="cBtnSquadNext" disabled>Продовжити →</button>
@@ -244,85 +245,89 @@
 const ROSTERS = {
   ENG: { name:'Англія', color:'#2b3990', color2:'#c8102e',
     players:[
-      {name:'Jack Mercer',pos:'GK',ovr:87,age:27},
-      {name:'Callum Bishop',pos:'GK',ovr:79,age:23},
-      {name:'Harry Whitlock',pos:'DF',ovr:85,age:26},
-      {name:'Owen Faulkner',pos:'DF',ovr:84,age:28},
-      {name:'Ben Ashcroft',pos:'DF',ovr:82,age:24},
-      {name:'Tom Redgrave',pos:'DF',ovr:81,age:30},
-      {name:'Liam Sutter',pos:'DF',ovr:79,age:22},
-      {name:'Ryan Kellaway',pos:'DF',ovr:77,age:31},
-      {name:'Finn Ostler',pos:'MF',ovr:88,age:25},
-      {name:'George Pemberton',pos:'MF',ovr:86,age:27},
-      {name:'Josh Tanner',pos:'MF',ovr:85,age:24},
-      {name:'Dan Wrenfield',pos:'MF',ovr:83,age:29},
-      {name:'Sam Hargrove',pos:'MF',ovr:81,age:22},
-      {name:'Alex Corby',pos:'MF',ovr:79,age:33},
-      {name:'Will Draper',pos:'MF',ovr:76,age:20},
-      {name:'Charlie Nesbitt',pos:'FW',ovr:89,age:26},
-      {name:'Luke Fenwick',pos:'FW',ovr:87,age:24},
-      {name:'Ethan Marchbank',pos:'FW',ovr:84,age:29},
-      {name:'Oliver Stanmore',pos:'FW',ovr:80,age:21},
-      {name:'Jake Colborne',pos:'FW',ovr:77,age:32},
+      {name:'Jordan Pickford',club:'Everton',pos:'GK',ovr:86,age:32},
+      {name:'Aaron Ramsdale',club:'Newcastle United',pos:'GK',ovr:82,age:28},
+      {name:'Dean Henderson',club:'Crystal Palace',pos:'GK',ovr:80,age:29},
+      {name:'John Stones',club:'Manchester City',pos:'DF',ovr:87,age:32},
+      {name:'Marc Guehi',club:'Crystal Palace',pos:'DF',ovr:85,age:26},
+      {name:'Ezri Konsa',club:'Aston Villa',pos:'DF',ovr:84,age:28},
+      {name:'Levi Colwill',club:'Chelsea',pos:'DF',ovr:83,age:23},
+      {name:'Kyle Walker',club:'Manchester City',pos:'DF',ovr:82,age:36},
+      {name:'Ben White',club:'Arsenal',pos:'DF',ovr:82,age:28},
+      {name:'Luke Shaw',club:'Manchester United',pos:'DF',ovr:81,age:31},
+      {name:'Jude Bellingham',club:'Real Madrid',pos:'MF',ovr:93,age:23},
+      {name:'Declan Rice',club:'Arsenal',pos:'MF',ovr:89,age:27},
+      {name:'Phil Foden',club:'Manchester City',pos:'MF',ovr:88,age:26},
+      {name:'Cole Palmer',club:'Chelsea',pos:'MF',ovr:88,age:24},
+      {name:'Adam Wharton',club:'Crystal Palace',pos:'MF',ovr:82,age:22},
+      {name:'Kobbie Mainoo',club:'Manchester United',pos:'MF',ovr:81,age:21},
+      {name:'Harry Kane',club:'Bayern Munich',pos:'FW',ovr:92,age:33},
+      {name:'Bukayo Saka',club:'Arsenal',pos:'FW',ovr:89,age:24},
+      {name:'Ollie Watkins',club:'Aston Villa',pos:'FW',ovr:85,age:30},
+      {name:'Anthony Gordon',club:'Newcastle United',pos:'FW',ovr:84,age:25},
+      {name:'Noni Madueke',club:'Arsenal',pos:'FW',ovr:82,age:24},
     ]},
   UKR: { name:'Україна', color:'#0057b7', color2:'#ffd700',
     players:[
-      {name:'Andriy Kovalenko',pos:'GK',ovr:80,age:28},
-      {name:'Ostap Sydorenko',pos:'GK',ovr:73,age:22},
-      {name:'Taras Bondarenko',pos:'DF',ovr:78,age:27},
-      {name:'Yevhen Marchenko',pos:'DF',ovr:76,age:25},
-      {name:'Roman Tkachenko',pos:'DF',ovr:75,age:30},
-      {name:'Vitaliy Shevchuk',pos:'DF',ovr:73,age:23},
-      {name:'Danylo Melnyk',pos:'DF',ovr:71,age:29},
-      {name:'Ihor Poliakov',pos:'DF',ovr:69,age:21},
-      {name:'Maksym Kravets',pos:'MF',ovr:81,age:26},
-      {name:'Bohdan Rudenko',pos:'MF',ovr:79,age:24},
-      {name:'Oleh Savchenko',pos:'MF',ovr:77,age:28},
-      {name:'Serhiy Lysenko',pos:'MF',ovr:75,age:31},
-      {name:'Nazar Hrytsenko',pos:'MF',ovr:73,age:22},
-      {name:'Denys Kucher',pos:'MF',ovr:71,age:20},
-      {name:'Pavlo Zinchenko',pos:'MF',ovr:68,age:33},
-      {name:'Artem Boyko',pos:'FW',ovr:82,age:25},
-      {name:'Mykola Petrenko',pos:'FW',ovr:79,age:27},
-      {name:'Yaroslav Doroshenko',pos:'FW',ovr:76,age:23},
-      {name:'Kyrylo Ivanchuk',pos:'FW',ovr:72,age:30},
-      {name:'Vadym Symonenko',pos:'FW',ovr:69,age:20},
+      {name:'Anatoliy Trubin',club:'Benfica',pos:'GK',ovr:85,age:24},
+      {name:'Andriy Lunin',club:'Real Madrid',pos:'GK',ovr:84,age:27},
+      {name:'Dmytro Riznyk',club:'Shakhtar Donetsk',pos:'GK',ovr:78,age:27},
+      {name:'Illia Zabarnyi',club:'Bournemouth',pos:'DF',ovr:86,age:23},
+      {name:'Vitalii Mykolenko',club:'Everton',pos:'DF',ovr:82,age:27},
+      {name:'Mykola Matviyenko',club:'Shakhtar Donetsk',pos:'DF',ovr:81,age:30},
+      {name:'Yukhym Konoplia',club:'Shakhtar Donetsk',pos:'DF',ovr:79,age:26},
+      {name:'Oleksandr Tymchyk',club:'Dynamo Kyiv',pos:'DF',ovr:77,age:29},
+      {name:'Oleksandr Svatok',club:'Austin FC',pos:'DF',ovr:76,age:31},
+      {name:'Valeriy Bondar',club:'Shakhtar Donetsk',pos:'DF',ovr:75,age:27},
+      {name:'Oleksandr Zinchenko',club:'Arsenal',pos:'MF',ovr:85,age:29},
+      {name:'Heorhii Sudakov',club:'Shakhtar Donetsk',pos:'MF',ovr:84,age:23},
+      {name:'Mykola Shaparenko',club:'Dynamo Kyiv',pos:'MF',ovr:81,age:27},
+      {name:'Volodymyr Brazhko',club:'Dynamo Kyiv',pos:'MF',ovr:79,age:24},
+      {name:'Ruslan Malinovskyi',club:'Genoa',pos:'MF',ovr:79,age:33},
+      {name:'Oleksii Hutsuliak',club:'Polissya Zhytomyr',pos:'MF',ovr:76,age:28},
+      {name:'Ivan Kalyuzhnyi',club:'Metalist 1925',pos:'MF',ovr:75,age:28},
+      {name:'Artem Dovbyk',club:'Roma',pos:'FW',ovr:86,age:29},
+      {name:'Vladyslav Vanat',club:'Dynamo Kyiv',pos:'FW',ovr:81,age:24},
+      {name:'Roman Yaremchuk',club:'Olympiacos',pos:'FW',ovr:80,age:30},
+      {name:'Viktor Tsyhankov',club:'Girona',pos:'FW',ovr:83,age:28},
+      {name:'Mykhailo Mudryk',club:'Chelsea',pos:'FW',ovr:82,age:25},
+      {name:'Andriy Yarmolenko',club:'Dynamo Kyiv',pos:'FW',ovr:78,age:36},
     ]},
   SWE: { name:'Швеція', color:'#006aa7', color2:'#fecc02',
     players:[
-      {name:'Erik Lindqvist',pos:'GK',ovr:83,age:29},
-      {name:'Gustav Berg',pos:'GK',ovr:76,age:24},
-      {name:'Anton Sjöberg',pos:'DF',ovr:81,age:27},
-      {name:'Viktor Holm',pos:'DF',ovr:79,age:25},
-      {name:'Filip Ekström',pos:'DF',ovr:77,age:31},
-      {name:'Oscar Lindgren',pos:'DF',ovr:75,age:23},
-      {name:'Simon Åhman',pos:'DF',ovr:73,age:28},
-      {name:'Emil Nyström',pos:'DF',ovr:71,age:22},
-      {name:'Jonas Wallin',pos:'MF',ovr:84,age:26},
-      {name:'Axel Sandberg',pos:'MF',ovr:82,age:28},
-      {name:'Marcus Fransson',pos:'MF',ovr:80,age:24},
-      {name:'Adam Blomqvist',pos:'MF',ovr:78,age:30},
-      {name:'Linus Åkesson',pos:'MF',ovr:75,age:21},
-      {name:'Karl Fagerström',pos:'MF',ovr:72,age:33},
-      {name:'Rasmus Öhman',pos:'MF',ovr:69,age:19},
-      {name:'Hugo Lundberg',pos:'FW',ovr:85,age:27},
-      {name:'Elias Nordin',pos:'FW',ovr:82,age:25},
-      {name:'William Strand',pos:'FW',ovr:78,age:29},
-      {name:'Sebastian Höglund',pos:'FW',ovr:74,age:22},
-      {name:'Isak Bergström',pos:'FW',ovr:70,age:32},
+      {name:'Robin Olsen',club:'Malmo FF',pos:'GK',ovr:80,age:36},
+      {name:'Viktor Johansson',club:'Stoke City',pos:'GK',ovr:78,age:27},
+      {name:'Kristoffer Nordfeldt',club:'AIK',pos:'GK',ovr:75,age:37},
+      {name:'Victor Lindelof',club:'Manchester United',pos:'DF',ovr:82,age:32},
+      {name:'Isak Hien',club:'Atalanta',pos:'DF',ovr:81,age:27},
+      {name:'Gabriel Gudmundsson',club:'Lille',pos:'DF',ovr:79,age:27},
+      {name:'Ludwig Augustinsson',club:'Anderlecht',pos:'DF',ovr:78,age:32},
+      {name:'Emil Holm',club:'Bologna',pos:'DF',ovr:78,age:26},
+      {name:'Hjalmar Ekdal',club:'Burnley',pos:'DF',ovr:76,age:27},
+      {name:'Carl Starfelt',club:'Celta Vigo',pos:'DF',ovr:76,age:31},
+      {name:'Dejan Kulusevski',club:'Tottenham Hotspur',pos:'MF',ovr:86,age:26},
+      {name:'Lucas Bergvall',club:'Tottenham Hotspur',pos:'MF',ovr:81,age:20},
+      {name:'Mattias Svanberg',club:'Wolfsburg',pos:'MF',ovr:80,age:27},
+      {name:'Hugo Larsson',club:'Eintracht Frankfurt',pos:'MF',ovr:80,age:22},
+      {name:'Yasin Ayari',club:'Brighton & Hove Albion',pos:'MF',ovr:78,age:22},
+      {name:'Samuel Gustafson',club:'Urawa Red Diamonds',pos:'MF',ovr:76,age:31},
+      {name:'Viktor Gyokeres',club:'Arsenal',pos:'FW',ovr:89,age:28},
+      {name:'Alexander Isak',club:'Newcastle United',pos:'FW',ovr:88,age:26},
+      {name:'Anthony Elanga',club:'Newcastle United',pos:'FW',ovr:83,age:24},
+      {name:'Jesper Karlsson',club:'Bologna',pos:'FW',ovr:80,age:28},
+      {name:'Gustaf Nilsson',club:'Club Brugge',pos:'FW',ovr:78,age:29},
     ]},
 };
 
 const FREE_AGENTS = [
-  {name:'Marco Islenberg',pos:'GK',ovr:84,age:29},
-  {name:'Rafael Dumont',pos:'DF',ovr:83,age:27},
-  {name:'Dimitri Vasilenko',pos:'DF',ovr:80,age:24},
-  {name:'Kenji Arata',pos:'MF',ovr:86,age:26},
-  {name:'Lucas Ferreira',pos:'MF',ovr:82,age:23},
-  {name:'Bram Devos',pos:'FW',ovr:88,age:28},
-  {name:'Niko Petrov',pos:'FW',ovr:81,age:22},
+  {name:'Giorgi Mamardashvili',club:'Liverpool',pos:'GK',ovr:84,age:25},
+  {name:'Pau Torres',club:'Aston Villa',pos:'DF',ovr:84,age:29},
+  {name:'Jorrel Hato',club:'Chelsea',pos:'DF',ovr:81,age:20},
+  {name:'Martin Zubimendi',club:'Arsenal',pos:'MF',ovr:86,age:27},
+  {name:'Xavi Simons',club:'RB Leipzig',pos:'MF',ovr:84,age:23},
+  {name:'Benjamin Sesko',club:'RB Leipzig',pos:'FW',ovr:85,age:23},
+  {name:'Rasmus Hojlund',club:'Manchester United',pos:'FW',ovr:82,age:23},
 ];
-
 const POS_LABEL = {GK:'Воротар',DF:'Захисник',MF:'Півзахисник',FW:'Нападник'};
 const POS_ORDER = ['GK','DF','MF','FW'];
 const STARTER_QUOTA = {GK:1,DF:4,MF:4,FW:2}; // 11 total
@@ -350,6 +355,7 @@ const CS = {
   trainBonus:{atk:0,def:0},
   pendingFixtureIdx:null,
   matchTimer:null,
+  tournamentStarted:false,
 };
 
 function otherTeams(){ return Object.keys(ROSTERS).filter(k=>k!==CS.teamKey); }
@@ -357,7 +363,7 @@ function otherTeams(){ return Object.keys(ROSTERS).filter(k=>k!==CS.teamKey); }
 function resetState(){
   CS.teamKey=null; CS.roster=[]; CS.starters=[]; CS.bench=[];
   CS.freeAgents = FREE_AGENTS.map(p=>({...p,id:'fa'+(uid++)}));
-  CS.fixtures=[]; CS.table={}; CS.trainBonus={atk:0,def:0}; CS.pendingFixtureIdx=null;
+  CS.fixtures=[]; CS.table={}; CS.trainBonus={atk:0,def:0}; CS.pendingFixtureIdx=null; CS.tournamentStarted=false;
 }
 resetState();
 
@@ -453,7 +459,7 @@ function buildRosterList(){
         '<div class="p-tag '+p.pos+'">'+p.pos+'</div>'+
         '<div style="flex:1;min-width:0;">'+
           '<div class="p-name">'+p.name+'</div>'+
-          '<div class="p-sub">Вік '+p.age+' • Форма '+p.stamina+'%</div>'+
+          '<div class="p-sub">'+(p.club?p.club+' • ':'')+'Вік '+p.age+' • Форма '+p.stamina+'%</div>'+
         '</div>'+
         '<div class="stambar"><i style="width:'+p.stamina+'%"></i></div>'+
         '<div class="p-ovr">'+p.ovr+'</div>'+
@@ -465,12 +471,31 @@ function buildRosterList(){
     });
   });
 
+  document.getElementById('cBtnSquadBack').disabled = CS.tournamentStarted;
+  document.getElementById('cBtnSquadBack').textContent = CS.tournamentStarted ? 'Збірну вже обрано' : 'Змінити збірну';
   document.getElementById('cBtnSquadNext').disabled = !(CS.starters.length===11 && CS.bench.length===5);
 }
 
 document.getElementById('cBtnSquadBack').onclick = ()=> showScreen('cScreenTeam');
+document.getElementById('cBtnAutoSquad').onclick = ()=>{
+  CS.starters = [];
+  CS.bench = [];
+  POS_ORDER.forEach(pos=>{
+    const best = CS.roster.filter(p=>p.pos===pos && p.injured===0).sort((a,b)=>b.ovr-a.ovr).slice(0,STARTER_QUOTA[pos]);
+    best.forEach(p=>CS.starters.push(p.id));
+  });
+  CS.bench = CS.roster
+    .filter(p=>p.injured===0 && !CS.starters.includes(p.id))
+    .sort((a,b)=>b.ovr-a.ovr)
+    .slice(0,5)
+    .map(p=>p.id);
+  buildRosterList();
+};
 document.getElementById('cBtnSquadNext').onclick = ()=>{
-  buildTable();
+  if(!CS.tournamentStarted){
+    buildTable();
+    CS.tournamentStarted = true;
+  }
   renderHub();
 };
 document.getElementById('cBtnTransfer').onclick = ()=>{ buildTransferList(); showScreen('cScreenTransfer'); };
@@ -491,7 +516,7 @@ function buildTransferList(){
     row.className='playerRow';
     row.innerHTML =
       '<div class="p-tag '+fa.pos+'">'+fa.pos+'</div>'+
-      '<div style="flex:1;min-width:0;"><div class="p-name">'+fa.name+'</div><div class="p-sub">Вік '+fa.age+' • Вільний агент</div></div>'+
+      '<div style="flex:1;min-width:0;"><div class="p-name">'+fa.name+'</div><div class="p-sub">'+(fa.club?fa.club+' • ':'')+'Вік '+fa.age+' • Вільний агент</div></div>'+
       '<div class="p-ovr">'+fa.ovr+'</div>'+
       '<button class="btn small gold" style="margin-left:4px;">Підписати</button>';
     row.querySelector('button').onclick=(e)=>{ e.stopPropagation(); openSignFlow(fa); };
@@ -503,12 +528,12 @@ function openSignFlow(fa){
   if(!candidates.length){ toast('Немає кого відпустити на цій позиції'); return; }
   candidates.sort((a,b)=>a.ovr-b.ovr);
   const weakest = candidates[0];
-  const ok = confirm('Підписати '+fa.name+' (ОВР '+fa.ovr+') замість '+weakest.name+' (ОВР '+weakest.ovr+')?');
+  const ok = confirm('Підписати '+fa.name+' ('+(fa.club||'без клубу')+', ОВР '+fa.ovr+') замість '+weakest.name+' (ОВР '+weakest.ovr+')?');
   if(!ok) return;
   CS.roster = CS.roster.filter(p=>p.id!==weakest.id);
   CS.starters = CS.starters.filter(id=>id!==weakest.id);
   CS.bench = CS.bench.filter(id=>id!==weakest.id);
-  CS.roster.push({name:fa.name,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100});
+  CS.roster.push({name:fa.name,club:fa.club,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100});
   CS.freeAgents = CS.freeAgents.filter(x=>x.id!==fa.id);
   toast(fa.name+' підписаний!');
   buildTransferList();
@@ -718,7 +743,7 @@ function simulateMatch(sideA,sideB){
       if(Math.random()<0.035){
         const dur = 1+Math.floor(Math.random()*2);
         p.injured = dur;
-        events.push({min:1+Math.floor(Math.random()*90),type:'injury',team:idx===0?'A':'B',player:p.name,dur:dur});
+        events.push({min:1+Math.floor(Math.random()*90),type:'injury',team:idx===0?'A':'B',player:p.name,playerId:p.id||null,dur:dur});
       }
     });
   });
@@ -727,6 +752,7 @@ function simulateMatch(sideA,sideB){
 }
 
 function startUserMatch(oppKey){
+  const recoveringBeforeMatch = new Set(CS.roster.filter(p=>p.injured>0).map(p=>p.id));
   autoFixUserLineup();
   const userOnPitch = CS.starters.map(id=>playerById(id));
   const oppPlayers = ROSTERS[oppKey].players.map(p=>({...p,injured:0}));
@@ -751,8 +777,12 @@ function startUserMatch(oppKey){
     f.ga = userIsA? result.golsA : result.golsB;
     f.gb = userIsA? result.golsB : result.golsA;
     applyResultToTable(f.a,f.b,f.ga,f.gb);
-    // tick down all injuries by 1 for the club after the match resolves
-    CS.roster.forEach(p=>{ if(p.injured>0) p.injured = Math.max(0,p.injured-1); });
+    const newInjuryIds = new Set(result.events.filter(e=>e.type==='injury' && e.playerId).map(e=>e.playerId));
+    CS.roster.forEach(p=>{
+      if(recoveringBeforeMatch.has(p.id) && !newInjuryIds.has(p.id) && p.injured>0){
+        p.injured = Math.max(0,p.injured-1);
+      }
+    });
     showResult(oppKey, golsFor, golsAg, result.events);
   });
 }
@@ -855,3 +885,4 @@ document.getElementById('cBtnRestart').onclick = ()=>{ resetState(); showScreen(
 </script>
 </body>
 </html>
+
