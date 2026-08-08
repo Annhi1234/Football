@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>РЕЖИМ ТРЕНЕРА</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#04110a;
+    --pitch:#12321f;
+    --panel:#0c1f14e6;
+    --line:#dff5e6;
+    --gold:#d8b154;
+    --red:#c8283f;
+    --blue:#5aa9e6;
+    --ink:#eaf3ec;
+    --ink-dim:#9fb8a9;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{margin:0;padding:0;width:100%;min-height:100%;background:var(--night);font-family:'Inter',sans-serif;color:var(--ink);}
+  body{background:radial-gradient(ellipse at 50% 0%,#123322 0%,#061109 70%);min-height:100vh;}
+  .h1{font-family:'Anton',sans-serif;letter-spacing:.5px;text-transform:uppercase;}
+  .mono{font-family:'Roboto Mono',monospace;}
+
+  .screen{display:flex;flex-direction:column;align-items:center;padding:22px 16px 60px;min-height:100vh;}
+  .hidden{display:none !important;}
+
+  .logo{font-family:'Anton',sans-serif;font-size:clamp(24px,6vw,36px);text-align:center;letter-spacing:1px;
+    background:linear-gradient(180deg,#fff,#cfe9d8 60%,var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 2px 18px rgba(216,177,84,.25);margin-bottom:4px;}
+  .sub{color:var(--ink-dim);font-size:12.5px;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;text-align:center;}
+
+  .btn{
+    font-family:'Anton',sans-serif;letter-spacing:.5px;text-transform:uppercase;
+    background:linear-gradient(180deg,#2c8a4f,#1b5c34);color:#fff;
+    border:1px solid #3fae6c55;border-radius:10px;padding:13px 22px;font-size:15px;cursor:pointer;
+    box-shadow:0 4px 0 #0e3a20,0 8px 16px rgba(0,0,0,.35);transition:transform .08s ease;
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0e3a20;}
+  .btn.gold{background:linear-gradient(180deg,#eccb7c,var(--gold));color:#2a1c02;border-color:#f3daa0;box-shadow:0 4px 0 #92702c,0 8px 16px rgba(0,0,0,.35);}
+  .btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1px solid #3fae6c55;}
+  .btn.red{background:linear-gradient(180deg,#e0576b,var(--red));border-color:#e88;box-shadow:0 4px 0 #7c1424,0 8px 16px rgba(0,0,0,.35);}
+  .btn.small{padding:8px 12px;font-size:11.5px;border-radius:8px;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+
+  .panel{background:var(--panel);border:1px solid #2c5b3d;border-radius:14px;padding:16px;width:100%;max-width:640px;backdrop-filter:blur(6px);margin-bottom:14px;}
+  .rowbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px;}
+
+  .grid-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;width:100%;max-width:640px;}
+  .team-card{background:var(--panel);border:1px solid #2c5b3d;border-radius:12px;padding:16px 10px;text-align:center;cursor:pointer;transition:.12s;}
+  .team-card:active{transform:scale(.96);}
+  .team-swatch{width:40px;height:40px;border-radius:50%;margin:0 auto 10px;border:2px solid #ffffff55;}
+  .team-name{font-size:14px;font-weight:800;}
+  .team-ovr{font-size:11px;color:var(--gold);font-family:'Roboto Mono',monospace;margin-top:4px;}
+
+  .sectionTitle{font-family:'Anton',sans-serif;letter-spacing:1px;color:var(--gold);font-size:13.5px;text-transform:uppercase;margin:12px 0 8px;}
+  .counterBar{display:flex;gap:8px;flex-wrap:wrap;background:#08170ecc;border:1px solid #2c5b3d55;border-radius:10px;padding:8px 10px;font-size:11.5px;font-family:'Roboto Mono',monospace;margin-bottom:6px;}
+  .counterBar b{color:var(--gold);}
+
+  .playerRow{display:flex;align-items:center;gap:8px;background:#08170ecc;border:1px solid #2c5b3d55;border-radius:10px;padding:9px 10px;margin-top:6px;cursor:pointer;}
+  .playerRow.starter{border-color:var(--gold);background:#3a2c0f55;}
+  .playerRow.bench{border-color:var(--blue);background:#0f2c3a55;}
+  .playerRow.injured{opacity:.55;}
+  .p-tag{width:30px;text-align:center;font-size:10px;font-weight:800;padding:3px 0;border-radius:5px;background:#000000aa;color:var(--ink-dim);flex-shrink:0;}
+  .p-tag.GK{color:#ffd36b;}.p-tag.DF{color:#7de3c8;}.p-tag.MF{color:#6bb7ff;}.p-tag.FW{color:#ff9b6b;}
+  .p-name{flex:1;font-size:13px;font-weight:700;min-width:0;}
+  .p-sub{font-size:10px;color:var(--ink-dim);font-family:'Roboto Mono',monospace;}
+  .p-ovr{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--gold);font-size:14px;min-width:26px;text-align:center;}
+  .p-state{font-size:9.5px;padding:3px 7px;border-radius:20px;background:#000000aa;color:var(--ink-dim);font-family:'Roboto Mono',monospace;letter-spacing:.5px;white-space:nowrap;}
+  .p-state.on{background:var(--gold);color:#2a1c02;font-weight:700;}
+  .p-state.bn{background:var(--blue);color:#04110a;font-weight:700;}
+  .p-state.hurt{background:var(--red);color:#fff;font-weight:700;}
+  .stambar{width:36px;height:5px;background:#00000066;border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .stambar i{display:block;height:100%;background:linear-gradient(90deg,#ffe36b,#5ecf7a);}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+  table.tbl th,table.tbl td{padding:6px 4px;text-align:center;border-bottom:1px solid #2c5b3d55;}
+  table.tbl th{color:var(--ink-dim);font-weight:600;font-size:10px;text-transform:uppercase;}
+  table.tbl td.name{text-align:left;font-weight:700;}
+  table.tbl tr.me td.name{color:var(--gold);}
+
+  .fixture{display:flex;align-items:center;justify-content:space-between;background:#08170ecc;border:1px solid #2c5b3d55;border-radius:10px;padding:10px 12px;margin-top:8px;}
+  .fixture .vs{font-family:'Roboto Mono',monospace;color:var(--ink-dim);font-size:12px;}
+  .fixture .fname{font-weight:700;font-size:12.5px;flex:1;}
+  .fixture .fscore{font-family:'Roboto Mono',monospace;font-weight:700;color:var(--gold);min-width:44px;text-align:center;}
+  .fixture.played{opacity:.7;}
+
+  .trainCard{background:#08170ecc;border:1px solid #2c5b3d55;border-radius:12px;padding:14px;margin-top:10px;cursor:pointer;}
+  .trainCard:active{transform:scale(.98);}
+  .trainCard h4{margin:0 0 4px;font-family:'Anton',sans-serif;letter-spacing:.5px;color:var(--gold);font-size:14px;text-transform:uppercase;}
+  .trainCard p{margin:0;font-size:12px;color:var(--ink-dim);}
+
+  .scoreBig{display:flex;align-items:center;justify-content:center;gap:16px;margin:6px 0 14px;}
+  .scoreBig .tname{font-family:'Anton',sans-serif;font-size:15px;text-align:center;flex:1;letter-spacing:.5px;}
+  .scoreBig .sc{font-family:'Roboto Mono',monospace;font-weight:700;font-size:30px;background:#000000aa;border-radius:8px;padding:4px 14px;}
+  .clockMono{text-align:center;font-family:'Roboto Mono',monospace;color:var(--gold);font-size:13px;margin-bottom:8px;}
+  .eventLog{max-height:260px;overflow-y:auto;display:flex;flex-direction:column-reverse;}
+  .evt{display:flex;gap:8px;align-items:center;padding:7px 4px;border-bottom:1px solid #2c5b3d33;font-size:12.5px;}
+  .evt .em{font-family:'Roboto Mono',monospace;color:var(--gold);min-width:34px;font-size:11px;}
+  .evt.goal{color:#fff;font-weight:700;}
+  .evt.injury{color:#ff8080;}
+
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:#2c5b3d;border-radius:4px;}
+
+  .topLink{position:fixed;top:10px;left:10px;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--ink-dim);
+    background:#08170ecc;border:1px solid #2c5b3d55;border-radius:8px;padding:6px 10px;text-decoration:none;z-index:5;}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#c8283fee;color:#fff;
+    padding:9px 16px;border-radius:20px;font-size:12.5px;font-weight:700;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<a class="topLink" href="index.html">← До гри</a>
+
+<!-- ============ MENU ============ -->
+<div id="cScreenMenu" class="screen">
+  <div style="height:20px"></div>
+  <div class="logo h1">РЕЖИМ ТРЕНЕРА</div>
+  <div class="sub">Обери збірну • сформуй склад • тренуй • грай матчі</div>
+  <button class="btn gold" id="cBtnStart">Обрати збірну</button>
+  <div style="height:10px"></div>
+  <button class="btn ghost" id="cBtnHow">Як це працює</button>
+</div>
+
+<div id="cScreenHow" class="screen hidden">
+  <div class="logo h1" style="font-size:24px">ЯК ЦЕ ПРАЦЮЄ</div>
+  <div class="panel">
+    <p><b>1. Збірна.</b> Обери одну з трьох збірних: Англія, Україна, Швеція.</p>
+    <p><b>2. Склад.</b> З повного ростеру обери 11 гравців в основу (1 ВР, 4 ЗХ, 4 ПЗ, 2 НП) та 5 у запас. На трансферному ринку можна підписати вільних агентів замість слабших гравців.</p>
+    <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка або відпочинок. Це впливає на форму й ризик травм.</p>
+    <p><b>4. Матчі.</b> Твоя збірна грає міні-турнір проти двох інших. Гравці можуть отримувати травми і випадати на 1-2 матчі — тоді потрібна заміна зі складу.</p>
+    <p><b>5. Чемпіон.</b> Найбільше очок після всіх матчів — чемпіон міні-турніру.</p>
+  </div>
+  <button class="btn" id="cBtnHowBack">Назад</button>
+</div>
+
+<!-- ============ TEAM PICK ============ -->
+<div id="cScreenTeam" class="screen hidden">
+  <div class="logo h1" style="font-size:22px">ОБЕРИ ЗБІРНУ</div>
+  <div class="sub">3 збірні • міні-турнір у 3 тури</div>
+  <div class="grid-teams" id="cTeamGrid"></div>
+</div>
+
+<!-- ============ SQUAD BUILDER ============ -->
+<div id="cScreenSquad" class="screen hidden">
+  <div class="logo h1" style="font-size:20px" id="cSquadTitle">СКЛАД ЗБІРНОЇ</div>
+  <div class="sub">Тапни гравця, щоб призначити в основу / запас</div>
+  <div class="panel" style="max-width:680px;">
+    <div class="counterBar" id="cCounters"></div>
+    <div id="cRosterList"></div>
+  </div>
+  <div class="rowbtns">
+    <button class="btn ghost small" id="cBtnTransfer">Трансферний ринок</button>
+    <button class="btn ghost small" id="cBtnSquadBack">Змінити збірну</button>
+    <button class="btn gold" id="cBtnSquadNext" disabled>Продовжити →</button>
+  </div>
+</div>
+
+<!-- ============ TRANSFER MARKET ============ -->
+<div id="cScreenTransfer" class="screen hidden">
+  <div class="logo h1" style="font-size:20px">ТРАНСФЕРНИЙ РИНОК</div>
+  <div class="sub">Підпиши вільного агента замість гравця своєї позиції</div>
+  <div class="panel" style="max-width:680px;" id="cTransferList"></div>
+  <div class="rowbtns">
+    <button class="btn gold" id="cBtnTransferBack">До складу</button>
+  </div>
+</div>
+
+<!-- ============ HUB (standings/fixtures) ============ -->
+<div id="cScreenHub" class="screen hidden">
+  <div class="logo h1" style="font-size:22px">МІНІ-ТУРНІР</div>
+  <div class="sub" id="cHubSub"></div>
+  <div class="panel" style="max-width:640px;">
+    <div class="sectionTitle">Турнірна таблиця</div>
+    <table class="tbl" id="cTable"></table>
+    <div class="sectionTitle">Матчі</div>
+    <div id="cFixtures"></div>
+  </div>
+  <div class="rowbtns" id="cHubBtns"></div>
+</div>
+
+<!-- ============ TRAINING ============ -->
+<div id="cScreenTraining" class="screen hidden">
+  <div class="logo h1" style="font-size:20px">ТРЕНУВАННЯ</div>
+  <div class="sub" id="cTrainingSub">Обери фокус перед матчем</div>
+  <div class="panel" style="max-width:600px;" id="cTrainingCards"></div>
+</div>
+
+<!-- ============ MATCH ============ -->
+<div id="cScreenMatch" class="screen hidden">
+  <div class="logo h1" style="font-size:18px" id="cMatchLabel">МАТЧ</div>
+  <div class="panel" style="max-width:640px;">
+    <div class="scoreBig">
+      <div class="tname" id="cMTeamA"></div>
+      <div class="sc mono" id="cMScore">0 : 0</div>
+      <div class="tname" id="cMTeamB"></div>
+    </div>
+    <div class="clockMono" id="cMClock">0'</div>
+    <div class="eventLog" id="cMLog"></div>
+  </div>
+  <div class="rowbtns">
+    <button class="btn ghost" id="cBtnSkip">Пропустити анімацію</button>
+    <button class="btn gold hidden" id="cBtnMatchCont">Продовжити</button>
+  </div>
+</div>
+
+<!-- ============ RESULT ============ -->
+<div id="cScreenResult" class="screen hidden">
+  <div class="logo h1" style="font-size:24px" id="cResTitle">РЕЗУЛЬТАТ</div>
+  <div class="panel" style="max-width:600px;text-align:center;">
+    <div class="mono" style="font-size:30px;font-weight:700;" id="cResScore">0 : 0</div>
+    <div class="sub" id="cResSub" style="margin-top:8px;"></div>
+    <div id="cResInjuries" style="margin-top:10px;"></div>
+  </div>
+  <div class="rowbtns">
+    <button class="btn ghost small" id="cBtnAdjustSquad">Скоригувати склад</button>
+    <button class="btn gold" id="cBtnResultCont">Далі</button>
+  </div>
+</div>
+
+<!-- ============ CHAMPION ============ -->
+<div id="cScreenChamp" class="screen hidden">
+  <div class="logo h1" style="font-size:30px">🏆 ЧЕМПІОН ТУРНІРУ!</div>
+  <div class="sub" id="cChampSub"></div>
+  <div class="panel" style="max-width:520px;">
+    <table class="tbl" id="cChampTable"></table>
+  </div>
+  <button class="btn gold" id="cBtnRestart">Новий сезон</button>
+</div>
+
+<div class="toast" id="cToast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ========================================================================
+   DATA: 3 national squads for coach mode
+   ======================================================================== */
+const ROSTERS = {
+  ENG: { name:'Англія', color:'#2b3990', color2:'#c8102e',
+    players:[
+      {name:'Jack Mercer',pos:'GK',ovr:87,age:27},
+      {name:'Callum Bishop',pos:'GK',ovr:79,age:23},
+      {name:'Harry Whitlock',pos:'DF',ovr:85,age:26},
+      {name:'Owen Faulkner',pos:'DF',ovr:84,age:28},
+      {name:'Ben Ashcroft',pos:'DF',ovr:82,age:24},
+      {name:'Tom Redgrave',pos:'DF',ovr:81,age:30},
+      {name:'Liam Sutter',pos:'DF',ovr:79,age:22},
+      {name:'Ryan Kellaway',pos:'DF',ovr:77,age:31},
+      {name:'Finn Ostler',pos:'MF',ovr:88,age:25},
+      {name:'George Pemberton',pos:'MF',ovr:86,age:27},
+      {name:'Josh Tanner',pos:'MF',ovr:85,age:24},
+      {name:'Dan Wrenfield',pos:'MF',ovr:83,age:29},
+      {name:'Sam Hargrove',pos:'MF',ovr:81,age:22},
+      {name:'Alex Corby',pos:'MF',ovr:79,age:33},
+      {name:'Will Draper',pos:'MF',ovr:76,age:20},
+      {name:'Charlie Nesbitt',pos:'FW',ovr:89,age:26},
+      {name:'Luke Fenwick',pos:'FW',ovr:87,age:24},
+      {name:'Ethan Marchbank',pos:'FW',ovr:84,age:29},
+      {name:'Oliver Stanmore',pos:'FW',ovr:80,age:21},
+      {name:'Jake Colborne',pos:'FW',ovr:77,age:32},
+    ]},
+  UKR: { name:'Україна', color:'#0057b7', color2:'#ffd700',
+    players:[
+      {name:'Andriy Kovalenko',pos:'GK',ovr:80,age:28},
+      {name:'Ostap Sydorenko',pos:'GK',ovr:73,age:22},
+      {name:'Taras Bondarenko',pos:'DF',ovr:78,age:27},
+      {name:'Yevhen Marchenko',pos:'DF',ovr:76,age:25},
+      {name:'Roman Tkachenko',pos:'DF',ovr:75,age:30},
+      {name:'Vitaliy Shevchuk',pos:'DF',ovr:73,age:23},
+      {name:'Danylo Melnyk',pos:'DF',ovr:71,age:29},
+      {name:'Ihor Poliakov',pos:'DF',ovr:69,age:21},
+      {name:'Maksym Kravets',pos:'MF',ovr:81,age:26},
+      {name:'Bohdan Rudenko',pos:'MF',ovr:79,age:24},
+      {name:'Oleh Savchenko',pos:'MF',ovr:77,age:28},
+      {name:'Serhiy Lysenko',pos:'MF',ovr:75,age:31},
+      {name:'Nazar Hrytsenko',pos:'MF',ovr:73,age:22},
+      {name:'Denys Kucher',pos:'MF',ovr:71,age:20},
+      {name:'Pavlo Zinchenko',pos:'MF',ovr:68,age:33},
+      {name:'Artem Boyko',pos:'FW',ovr:82,age:25},
+      {name:'Mykola Petrenko',pos:'FW',ovr:79,age:27},
+      {name:'Yaroslav Doroshenko',pos:'FW',ovr:76,age:23},
+      {name:'Kyrylo Ivanchuk',pos:'FW',ovr:72,age:30},
+      {name:'Vadym Symonenko',pos:'FW',ovr:69,age:20},
+    ]},
+  SWE: { name:'Швеція', color:'#006aa7', color2:'#fecc02',
+    players:[
+      {name:'Erik Lindqvist',pos:'GK',ovr:83,age:29},
+      {name:'Gustav Berg',pos:'GK',ovr:76,age:24},
+      {name:'Anton Sjöberg',pos:'DF',ovr:81,age:27},
+      {name:'Viktor Holm',pos:'DF',ovr:79,age:25},
+      {name:'Filip Ekström',pos:'DF',ovr:77,age:31},
+      {name:'Oscar Lindgren',pos:'DF',ovr:75,age:23},
+      {name:'Simon Åhman',pos:'DF',ovr:73,age:28},
+      {name:'Emil Nyström',pos:'DF',ovr:71,age:22},
+      {name:'Jonas Wallin',pos:'MF',ovr:84,age:26},
+      {name:'Axel Sandberg',pos:'MF',ovr:82,age:28},
+      {name:'Marcus Fransson',pos:'MF',ovr:80,age:24},
+      {name:'Adam Blomqvist',pos:'MF',ovr:78,age:30},
+      {name:'Linus Åkesson',pos:'MF',ovr:75,age:21},
+      {name:'Karl Fagerström',pos:'MF',ovr:72,age:33},
+      {name:'Rasmus Öhman',pos:'MF',ovr:69,age:19},
+      {name:'Hugo Lundberg',pos:'FW',ovr:85,age:27},
+      {name:'Elias Nordin',pos:'FW',ovr:82,age:25},
+      {name:'William Strand',pos:'FW',ovr:78,age:29},
+      {name:'Sebastian Höglund',pos:'FW',ovr:74,age:22},
+      {name:'Isak Bergström',pos:'FW',ovr:70,age:32},
+    ]},
+};
+
+const FREE_AGENTS = [
+  {name:'Marco Islenberg',pos:'GK',ovr:84,age:29},
+  {name:'Rafael Dumont',pos:'DF',ovr:83,age:27},
+  {name:'Dimitri Vasilenko',pos:'DF',ovr:80,age:24},
+  {name:'Kenji Arata',pos:'MF',ovr:86,age:26},
+  {name:'Lucas Ferreira',pos:'MF',ovr:82,age:23},
+  {name:'Bram Devos',pos:'FW',ovr:88,age:28},
+  {name:'Niko Petrov',pos:'FW',ovr:81,age:22},
+];
+
+const POS_LABEL = {GK:'Воротар',DF:'Захисник',MF:'Півзахисник',FW:'Нападник'};
+const POS_ORDER = ['GK','DF','MF','FW'];
+const STARTER_QUOTA = {GK:1,DF:4,MF:4,FW:2}; // 11 total
+
+const TRAININGS = [
+  {key:'atk', title:'Атакувальні дії', desc:'+ до сили атаки на наступний матч.'},
+  {key:'def', title:'Оборонні дії', desc:'+ до стійкості оборони на наступний матч.'},
+  {key:'phys', title:'Фізична підготовка', desc:'Швидко відновлює форму, але є невеликий ризик травми при перевтомі.'},
+  {key:'rest', title:'Відпочинок', desc:'Найкраще відновлення форми, без ризику травм, без бонусу.'},
+];
+
+let uid = 1;
+
+/* ========================================================================
+   STATE
+   ======================================================================== */
+const CS = {
+  teamKey:null,
+  roster:[],          // this club's players (with runtime fields)
+  starters:[],        // ids
+  bench:[],           // ids
+  freeAgents:[],
+  fixtures:[],         // {a,b,played,ga,gb}
+  table:{},            // key -> {pts,w,d,l,gf,ga}
+  trainBonus:{atk:0,def:0},
+  pendingFixtureIdx:null,
+  matchTimer:null,
+};
+
+function otherTeams(){ return Object.keys(ROSTERS).filter(k=>k!==CS.teamKey); }
+
+function resetState(){
+  CS.teamKey=null; CS.roster=[]; CS.starters=[]; CS.bench=[];
+  CS.freeAgents = FREE_AGENTS.map(p=>({...p,id:'fa'+(uid++)}));
+  CS.fixtures=[]; CS.table={}; CS.trainBonus={atk:0,def:0}; CS.pendingFixtureIdx=null;
+}
+resetState();
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const t=document.getElementById('cToast');
+  t.textContent=msg; t.style.opacity=1;
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.style.opacity=0,1800);
+}
+
+/* ========================================================================
+   TEAM PICK
+   ======================================================================== */
+function buildTeamGrid(){
+  const grid = document.getElementById('cTeamGrid');
+  grid.innerHTML='';
+  Object.keys(ROSTERS).forEach(key=>{
+    const t = ROSTERS[key];
+    const avg = Math.round(t.players.reduce((s,p)=>s+p.ovr,0)/t.players.length);
+    const card = document.createElement('div');
+    card.className='team-card';
+    card.innerHTML = '<div class="team-swatch" style="background:'+t.color+';border-color:'+t.color2+'"></div>'+
+      '<div class="team-name">'+t.name+'</div><div class="team-ovr mono">РЕЙТИНГ '+avg+'</div>';
+    card.onclick=()=>selectTeam(key);
+    grid.appendChild(card);
+  });
+}
+function selectTeam(key){
+  resetState();
+  CS.teamKey=key;
+  CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100}));
+  buildFixtures();
+  buildRosterList();
+  showScreen('cScreenSquad');
+}
+
+/* ========================================================================
+   SQUAD BUILDER
+   ======================================================================== */
+function playerById(id){ return CS.roster.find(p=>p.id===id); }
+function starterCounts(){
+  const c={GK:0,DF:0,MF:0,FW:0};
+  CS.starters.forEach(id=>{ const p=playerById(id); if(p) c[p.pos]++; });
+  return c;
+}
+function cycleAssignment(id){
+  const inStart = CS.starters.includes(id);
+  const inBench = CS.bench.includes(id);
+  const p = playerById(id);
+  if(p.injured>0){ toast(p.name+' травмований — недоступний ('+p.injured+' матч(і))'); return; }
+  if(!inStart && !inBench){
+    const counts = starterCounts();
+    if(CS.starters.length>=11 || counts[p.pos]>=STARTER_QUOTA[p.pos]){
+      toast('Немає вільного місця в основі на позицію '+POS_LABEL[p.pos]);
+      return;
+    }
+    CS.starters.push(id);
+  } else if(inStart){
+    CS.starters = CS.starters.filter(x=>x!==id);
+    if(CS.bench.length<5) CS.bench.push(id);
+  } else {
+    CS.bench = CS.bench.filter(x=>x!==id);
+  }
+  buildRosterList();
+}
+function buildRosterList(){
+  document.getElementById('cSquadTitle').textContent = 'СКЛАД: '+ROSTERS[CS.teamKey].name.toUpperCase();
+  const counts = starterCounts();
+  document.getElementById('cCounters').innerHTML =
+    '<span>Основа: <b>'+CS.starters.length+'/11</b></span>'+
+    '<span>ВР '+counts.GK+'/1</span><span>ЗХ '+counts.DF+'/4</span><span>ПЗ '+counts.MF+'/4</span><span>НП '+counts.FW+'/2</span>'+
+    '<span style="margin-left:auto">Запас: <b>'+CS.bench.length+'/5</b></span>';
+
+  const wrap = document.getElementById('cRosterList');
+  wrap.innerHTML='';
+  POS_ORDER.forEach(pos=>{
+    const group = CS.roster.filter(p=>p.pos===pos);
+    if(!group.length) return;
+    const h = document.createElement('div');
+    h.className='sectionTitle'; h.textContent = POS_LABEL[pos];
+    wrap.appendChild(h);
+    group.sort((a,b)=>b.ovr-a.ovr).forEach(p=>{
+      const inStart = CS.starters.includes(p.id);
+      const inBench = CS.bench.includes(p.id);
+      const row = document.createElement('div');
+      row.className='playerRow'+(inStart?' starter':inBench?' bench':'')+(p.injured>0?' injured':'');
+      row.innerHTML =
+        '<div class="p-tag '+p.pos+'">'+p.pos+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div class="p-name">'+p.name+'</div>'+
+          '<div class="p-sub">Вік '+p.age+' • Форма '+p.stamina+'%</div>'+
+        '</div>'+
+        '<div class="stambar"><i style="width:'+p.stamina+'%"></i></div>'+
+        '<div class="p-ovr">'+p.ovr+'</div>'+
+        '<div class="p-state '+(p.injured>0?'hurt':inStart?'on':inBench?'bn':'')+'">'+
+          (p.injured>0?'ТРАВМА '+p.injured:inStart?'ОСНОВА':inBench?'ЗАПАС':'РЕЗЕРВ')+
+        '</div>';
+      row.onclick=()=>cycleAssignment(p.id);
+      wrap.appendChild(row);
+    });
+  });
+
+  document.getElementById('cBtnSquadNext').disabled = !(CS.starters.length===11 && CS.bench.length===5);
+}
+
+document.getElementById('cBtnSquadBack').onclick = ()=> showScreen('cScreenTeam');
+document.getElementById('cBtnSquadNext').onclick = ()=>{
+  buildTable();
+  renderHub();
+};
+document.getElementById('cBtnTransfer').onclick = ()=>{ buildTransferList(); showScreen('cScreenTransfer'); };
+document.getElementById('cBtnTransferBack').onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
+
+/* ========================================================================
+   TRANSFER MARKET
+   ======================================================================== */
+function buildTransferList(){
+  const wrap = document.getElementById('cTransferList');
+  wrap.innerHTML='';
+  if(!CS.freeAgents.length){
+    wrap.innerHTML = '<div class="sub">Усіх вільних агентів вже підписано.</div>';
+    return;
+  }
+  CS.freeAgents.forEach(fa=>{
+    const row = document.createElement('div');
+    row.className='playerRow';
+    row.innerHTML =
+      '<div class="p-tag '+fa.pos+'">'+fa.pos+'</div>'+
+      '<div style="flex:1;min-width:0;"><div class="p-name">'+fa.name+'</div><div class="p-sub">Вік '+fa.age+' • Вільний агент</div></div>'+
+      '<div class="p-ovr">'+fa.ovr+'</div>'+
+      '<button class="btn small gold" style="margin-left:4px;">Підписати</button>';
+    row.querySelector('button').onclick=(e)=>{ e.stopPropagation(); openSignFlow(fa); };
+    wrap.appendChild(row);
+  });
+}
+function openSignFlow(fa){
+  const candidates = CS.roster.filter(p=>p.pos===fa.pos);
+  if(!candidates.length){ toast('Немає кого відпустити на цій позиції'); return; }
+  candidates.sort((a,b)=>a.ovr-b.ovr);
+  const weakest = candidates[0];
+  const ok = confirm('Підписати '+fa.name+' (ОВР '+fa.ovr+') замість '+weakest.name+' (ОВР '+weakest.ovr+')?');
+  if(!ok) return;
+  CS.roster = CS.roster.filter(p=>p.id!==weakest.id);
+  CS.starters = CS.starters.filter(id=>id!==weakest.id);
+  CS.bench = CS.bench.filter(id=>id!==weakest.id);
+  CS.roster.push({name:fa.name,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100});
+  CS.freeAgents = CS.freeAgents.filter(x=>x.id!==fa.id);
+  toast(fa.name+' підписаний!');
+  buildTransferList();
+}
+
+/* ========================================================================
+   FIXTURES / TABLE
+   ======================================================================== */
+function buildFixtures(){
+  const keys = Object.keys(ROSTERS);
+  CS.fixtures = [];
+  for(let i=0;i<keys.length;i++) for(let j=i+1;j<keys.length;j++){
+    CS.fixtures.push({a:keys[i],b:keys[j],played:false,ga:0,gb:0});
+  }
+  // ensure user's fixtures are addressed first
+  CS.fixtures.sort((f)=> (f.a===CS.teamKey||f.b===CS.teamKey)?-1:1);
+}
+function buildTable(){
+  CS.table = {};
+  Object.keys(ROSTERS).forEach(k=> CS.table[k]={pts:0,w:0,d:0,l:0,gf:0,ga:0});
+}
+function applyResultToTable(a,b,ga,gb){
+  const ta=CS.table[a], tb=CS.table[b];
+  ta.gf+=ga; ta.ga+=gb; tb.gf+=gb; tb.ga+=ga;
+  if(ga>gb){ta.w++;ta.pts+=3;tb.l++;}
+  else if(gb>ga){tb.w++;tb.pts+=3;ta.l++;}
+  else {ta.d++;tb.d++;ta.pts++;tb.pts++;}
+}
+function standingsArray(){
+  return Object.keys(CS.table).sort((x,y)=>{
+    const tx=CS.table[x], ty=CS.table[y];
+    if(ty.pts!==tx.pts) return ty.pts-tx.pts;
+    return (ty.gf-ty.ga)-(tx.gf-tx.ga);
+  });
+}
+
+/* ========================================================================
+   BEST XI helper for bot teams
+   ======================================================================== */
+function bestXI(players){
+  const pool = players.filter(p=>p.injured===0 || p.injured===undefined);
+  const pick=(pos,n)=> pool.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).slice(0,n);
+  return [].concat(pick('GK',1),pick('DF',4),pick('MF',4),pick('FW',2));
+}
+function autoFixUserLineup(){
+  // swap any injured starter with best available healthy bench/reserve of same position, else any position
+  const healthy = id => { const p=playerById(id); return p && p.injured===0; };
+  CS.starters = CS.starters.map(id=>{
+    if(healthy(id)) return id;
+    const injuredPlayer = playerById(id);
+    const pool = CS.roster.filter(p=>p.injured===0 && !CS.starters.includes(p.id) && p.id!==id);
+    let repl = pool.filter(p=>p.pos===injuredPlayer.pos).sort((a,b)=>b.ovr-a.ovr)[0];
+    if(!repl) repl = pool.sort((a,b)=>b.ovr-a.ovr)[0];
+    if(repl){
+      CS.bench = CS.bench.filter(x=>x!==repl.id);
+      if(!CS.bench.includes(id)) CS.bench.push(id);
+      toast(injuredPlayer.name+' травмований — на заміну виходить '+repl.name);
+      return repl.id;
+    }
+    return id; // no replacement available, plays weakened
+  });
+}
+
+/* ========================================================================
+   HUB
+   ======================================================================== */
+function renderHub(){
+  // auto-simulate fixtures that don't involve the user's team
+  let idx = CS.fixtures.findIndex(f=>!f.played);
+  while(idx!==-1 && CS.fixtures[idx].a!==CS.teamKey && CS.fixtures[idx].b!==CS.teamKey){
+    const f = CS.fixtures[idx];
+    const [ga,gb] = simInstant(f.a,f.b);
+    f.played=true; f.ga=ga; f.gb=gb;
+    applyResultToTable(f.a,f.b,ga,gb);
+    idx = CS.fixtures.findIndex(x=>!x.played);
+  }
+
+  document.getElementById('cHubSub').textContent = ROSTERS[CS.teamKey].name+' • міні-турнір із 3 команд';
+
+  const tbl = document.getElementById('cTable');
+  let html = '<tr><th style="text-align:left">Команда</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>РМ</th><th>О</th></tr>';
+  standingsArray().forEach(k=>{
+    const t = CS.table[k]; const played = t.w+t.d+t.l;
+    html += '<tr class="'+(k===CS.teamKey?'me':'')+'"><td class="name">'+ROSTERS[k].name+'</td><td>'+played+'</td><td>'+t.w+'</td><td>'+t.d+'</td><td>'+t.l+'</td><td>'+(t.gf-t.ga)+'</td><td>'+t.pts+'</td></tr>';
+  });
+  tbl.innerHTML = html;
+
+  const fx = document.getElementById('cFixtures');
+  fx.innerHTML='';
+  CS.fixtures.forEach(f=>{
+    const div = document.createElement('div');
+    div.className='fixture'+(f.played?' played':'');
+    div.innerHTML = '<span class="fname">'+ROSTERS[f.a].name+'</span><span class="fscore mono">'+(f.played?(f.ga+' - '+f.gb):'vs')+'</span><span class="fname" style="text-align:right">'+ROSTERS[f.b].name+'</span>';
+    fx.appendChild(div);
+  });
+
+  const btnWrap = document.getElementById('cHubBtns');
+  btnWrap.innerHTML='';
+  const nextUser = CS.fixtures.findIndex(f=>!f.played && (f.a===CS.teamKey||f.b===CS.teamKey));
+  if(nextUser!==-1){
+    CS.pendingFixtureIdx = nextUser;
+    const f = CS.fixtures[nextUser];
+    const oppKey = f.a===CS.teamKey? f.b : f.a;
+    const b1 = document.createElement('button');
+    b1.className='btn gold';
+    b1.textContent = 'Тренування перед матчем: '+ROSTERS[oppKey].name;
+    b1.onclick = ()=>{ openTraining(oppKey); };
+    btnWrap.appendChild(b1);
+    const b2 = document.createElement('button');
+    b2.className='btn ghost small';
+    b2.textContent = 'Скоригувати склад';
+    b2.onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
+    btnWrap.appendChild(b2);
+  } else {
+    const b = document.createElement('button');
+    b.className='btn gold';
+    b.textContent='Підсумки турніру';
+    b.onclick = showChampion;
+    btnWrap.appendChild(b);
+  }
+  showScreen('cScreenHub');
+}
+
+function simInstant(aKey,bKey){
+  const A = bestXI(ROSTERS[aKey].players.map(p=>({...p,injured:0})));
+  const B = bestXI(ROSTERS[bKey].players.map(p=>({...p,injured:0})));
+  const res = simulateMatch({onPitch:A,isUser:false,trainAtk:0,trainDef:0,avgStamina:90},{onPitch:B,isUser:false,trainAtk:0,trainDef:0,avgStamina:90});
+  return [res.golsA,res.golsB];
+}
+
+/* ========================================================================
+   TRAINING
+   ======================================================================== */
+function openTraining(oppKey){
+  document.getElementById('cTrainingSub').textContent = 'Перед матчем проти '+ROSTERS[oppKey].name;
+  const wrap = document.getElementById('cTrainingCards');
+  wrap.innerHTML='';
+  TRAININGS.forEach(t=>{
+    const card = document.createElement('div');
+    card.className='trainCard';
+    card.innerHTML = '<h4>'+t.title+'</h4><p>'+t.desc+'</p>';
+    card.onclick = ()=>{ applyTraining(t.key); startUserMatch(oppKey); };
+    wrap.appendChild(card);
+  });
+  showScreen('cScreenTraining');
+}
+function applyTraining(key){
+  CS.trainBonus = {atk:0,def:0};
+  if(key==='atk') CS.trainBonus.atk = 4;
+  if(key==='def') CS.trainBonus.def = 4;
+  if(key==='phys'){
+    CS.roster.forEach(p=>{
+      if(p.injured>0) return;
+      const risky = p.stamina<40;
+      p.stamina = Math.min(100,p.stamina+20);
+      if(risky && Math.random()<0.05){
+        p.injured = 1+Math.floor(Math.random()*2);
+        toast(p.name+' отримав травму на тренуванні! Пропустить '+p.injured+' матч(і)');
+      }
+    });
+  }
+  if(key==='rest'){
+    CS.roster.forEach(p=>{ if(p.injured===0) p.stamina = Math.min(100,p.stamina+35); });
+  }
+}
+
+/* ========================================================================
+   MATCH SIMULATION
+   ======================================================================== */
+function teamStrength(onPitch){
+  let sum=0;
+  onPitch.forEach(p=>{ const w = p.pos==='FW'?1.15:p.pos==='MF'?1.05:1; sum += p.ovr*w; });
+  return sum/onPitch.length;
+}
+function pickScorer(onPitch){
+  const pool = onPitch.filter(p=>p.pos!=='GK');
+  const weights = pool.map(p=> (p.pos==='FW'?3:p.pos==='MF'?2:1) * (p.ovr/70));
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for(let i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return pool[i]; }
+  return pool[pool.length-1];
+}
+function simulateMatch(sideA,sideB){
+  let strA = teamStrength(sideA.onPitch) + (sideA.trainAtk||0) - (sideB.trainDef||0);
+  let strB = teamStrength(sideB.onPitch) + (sideB.trainAtk||0) - (sideA.trainDef||0);
+  strA *= 0.85+0.15*((sideA.avgStamina||90)/100);
+  strB *= 0.85+0.15*((sideB.avgStamina||90)/100);
+  const diff = strA-strB;
+  const chances = 9+Math.floor(Math.random()*5);
+  let golsA=0, golsB=0;
+  const events=[];
+  for(let i=0;i<chances;i++){
+    const minute = 1+Math.floor(Math.random()*90);
+    const isA = Math.random() < (0.5+diff/280);
+    const own = isA?strA:strB, opp = isA?strB:strA;
+    const prob = Math.max(0.08, Math.min(0.6, 0.27+(own-opp)/170));
+    if(Math.random()<prob){
+      const scorer = pickScorer(isA?sideA.onPitch:sideB.onPitch);
+      if(isA) golsA++; else golsB++;
+      events.push({min:minute,type:'goal',team:isA?'A':'B',player:scorer?scorer.name:'Гравець'});
+    }
+  }
+  // injuries only tracked for sides flagged isUser
+  [sideA,sideB].forEach((side,idx)=>{
+    if(!side.isUser) return;
+    side.onPitch.forEach(p=>{
+      if(Math.random()<0.035){
+        const dur = 1+Math.floor(Math.random()*2);
+        p.injured = dur;
+        events.push({min:1+Math.floor(Math.random()*90),type:'injury',team:idx===0?'A':'B',player:p.name,dur:dur});
+      }
+    });
+  });
+  events.sort((x,y)=>x.min-y.min);
+  return {golsA,golsB,events};
+}
+
+function startUserMatch(oppKey){
+  autoFixUserLineup();
+  const userOnPitch = CS.starters.map(id=>playerById(id));
+  const oppPlayers = ROSTERS[oppKey].players.map(p=>({...p,injured:0}));
+  const oppOnPitch = bestXI(oppPlayers);
+  const avgStamina = Math.round(userOnPitch.reduce((s,p)=>s+p.stamina,0)/userOnPitch.length);
+
+  const f = CS.fixtures[CS.pendingFixtureIdx];
+  const userIsA = f.a===CS.teamKey;
+
+  const sideUser = {onPitch:userOnPitch,isUser:true,trainAtk:CS.trainBonus.atk,trainDef:CS.trainBonus.def,avgStamina};
+  const sideOpp  = {onPitch:oppOnPitch,isUser:false,trainAtk:0,trainDef:0,avgStamina:88};
+
+  const result = userIsA? simulateMatch(sideUser,sideOpp) : simulateMatch(sideOpp,sideUser);
+  const golsFor = userIsA? result.golsA : result.golsB;
+  const golsAg = userIsA? result.golsB : result.golsA;
+
+  // remap A/B events to my-team/opp for display, and consume stamina
+  userOnPitch.forEach(p=>{ if(p.injured===0) p.stamina = Math.max(15,p.stamina-(30+Math.floor(Math.random()*15))); });
+
+  runMatchScreen(oppKey, userIsA, result, ()=>{
+    f.played = true;
+    f.ga = userIsA? result.golsA : result.golsB;
+    f.gb = userIsA? result.golsB : result.golsA;
+    applyResultToTable(f.a,f.b,f.ga,f.gb);
+    // tick down all injuries by 1 for the club after the match resolves
+    CS.roster.forEach(p=>{ if(p.injured>0) p.injured = Math.max(0,p.injured-1); });
+    showResult(oppKey, golsFor, golsAg, result.events);
+  });
+}
+
+function runMatchScreen(oppKey, userIsA, result, onDone){
+  document.getElementById('cMatchLabel').textContent = 'МАТЧ • '+ROSTERS[CS.teamKey].name+' — '+ROSTERS[oppKey].name;
+  document.getElementById('cMTeamA').textContent = userIsA? ROSTERS[CS.teamKey].name : ROSTERS[oppKey].name;
+  document.getElementById('cMTeamB').textContent = userIsA? ROSTERS[oppKey].name : ROSTERS[CS.teamKey].name;
+  document.getElementById('cMScore').textContent = '0 : 0';
+  document.getElementById('cMClock').textContent = "0'";
+  document.getElementById('cMLog').innerHTML='';
+  document.getElementById('cBtnMatchCont').classList.add('hidden');
+  document.getElementById('cBtnSkip').classList.remove('hidden');
+  showScreen('cScreenMatch');
+
+  let i=0, gA=0, gB=0;
+  const events = result.events;
+  function pushEvent(ev){
+    const log = document.getElementById('cMLog');
+    const row = document.createElement('div');
+    let text;
+    if(ev.type==='goal'){
+      text = '⚽ ГОЛ! '+ev.player+' ('+(ev.team==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent)+')';
+      row.className='evt goal';
+    } else {
+      text = '🚑 Травма: '+ev.player+' — вибуває на '+ev.dur+' матч(і)';
+      row.className='evt injury';
+    }
+    row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
+    log.appendChild(row);
+    log.scrollTop = 0;
+  }
+  function step(){
+    if(i>=events.length){ finish(); return; }
+    const ev = events[i];
+    document.getElementById('cMClock').textContent = ev.min+"'";
+    if(ev.type==='goal'){
+      if(ev.team==='A') gA++; else gB++;
+      document.getElementById('cMScore').textContent = gA+' : '+gB;
+    }
+    pushEvent(ev);
+    i++;
+    CS.matchTimer = setTimeout(step, 420);
+  }
+  function finish(){
+    clearTimeout(CS.matchTimer);
+    document.getElementById('cMClock').textContent = "90'";
+    document.getElementById('cMScore').textContent = result.golsA+' : '+result.golsB;
+    document.getElementById('cBtnSkip').classList.add('hidden');
+    document.getElementById('cBtnMatchCont').classList.remove('hidden');
+    document.getElementById('cBtnMatchCont').onclick = onDone;
+  }
+  document.getElementById('cBtnSkip').onclick = ()=>{
+    clearTimeout(CS.matchTimer);
+    while(i<events.length){ 
+      const ev=events[i];
+      if(ev.type==='goal'){ if(ev.team==='A') gA++; else gB++; }
+      pushEvent(ev); i++;
+    }
+    finish();
+  };
+  step();
+}
+
+function showResult(oppKey, golsFor, golsAg, events){
+  document.getElementById('cResTitle').textContent = golsFor>golsAg?'ПЕРЕМОГА!':golsFor<golsAg?'ПОРАЗКА':'НІЧИЯ';
+  document.getElementById('cResScore').textContent = golsFor+' : '+golsAg;
+  document.getElementById('cResSub').textContent = ROSTERS[CS.teamKey].name+' проти '+ROSTERS[oppKey].name;
+  const injuries = events.filter(e=>e.type==='injury');
+  const inj = document.getElementById('cResInjuries');
+  inj.innerHTML = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
+  showScreen('cScreenResult');
+}
+
+document.getElementById('cBtnAdjustSquad').onclick = ()=>{ buildRosterList(); showScreen('cScreenSquad'); };
+document.getElementById('cBtnResultCont').onclick = ()=>{ renderHub(); };
+
+/* ========================================================================
+   CHAMPION
+   ======================================================================== */
+function showChampion(){
+  const standings = standingsArray();
+  const champKey = standings[0];
+  document.getElementById('cChampSub').textContent = champKey===CS.teamKey?
+    (ROSTERS[CS.teamKey].name+' — чемпіони міні-турніру! Вітаємо, тренере!') :
+    ('Турнір виграла '+ROSTERS[champKey].name+'. '+ROSTERS[CS.teamKey].name+' фінішували '+(standings.indexOf(CS.teamKey)+1)+'.');
+  document.getElementById('cChampTable').innerHTML = document.getElementById('cTable').innerHTML;
+  showScreen('cScreenChamp');
+}
+
+/* ========================================================================
+   NAV
+   ======================================================================== */
+document.getElementById('cBtnStart').onclick = ()=>{ buildTeamGrid(); showScreen('cScreenTeam'); };
+document.getElementById('cBtnHow').onclick = ()=> showScreen('cScreenHow');
+document.getElementById('cBtnHowBack').onclick = ()=> showScreen('cScreenMenu');
+document.getElementById('cBtnRestart').onclick = ()=>{ resetState(); showScreen('cScreenMenu'); };
+
+})();
+</script>
+</body>
+</html>
