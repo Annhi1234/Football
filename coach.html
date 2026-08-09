@@ -92,6 +92,11 @@
   .bmatch.userin{border-color:var(--gold);}
   .bmatch .w{color:var(--gold);font-weight:800;}
 
+  .stageBar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+  .stagePill{font-family:'Roboto Mono',monospace;font-size:10px;padding:5px 9px;border-radius:20px;background:#08170ecc;border:1px solid #2c5b3d55;color:var(--ink-dim);letter-spacing:.5px;}
+  .stagePill.done{background:#1b5c34;color:#fff;border-color:#3fae6c55;}
+  .stagePill.active{background:var(--gold);color:#2a1c02;font-weight:700;border-color:#f3daa0;}
+
   .trainCard{background:#08170ecc;border:1px solid #2c5b3d55;border-radius:12px;padding:14px;margin-top:10px;cursor:pointer;}
   .trainCard:active{transform:scale(.98);}
   .trainCard h4{margin:0 0 4px;font-family:'Anton',sans-serif;letter-spacing:.5px;color:var(--gold);font-size:14px;text-transform:uppercase;}
@@ -135,10 +140,9 @@
   <div class="panel">
     <p><b>1. Збірна.</b> Обери одну з доступних збірних з реальними гравцями: Англія, Україна або Швеція.</p>
     <p><b>2. Склад.</b> З повного ростеру обери 11 гравців в основу (1 ВР, 4 ЗХ, 4 ПЗ, 2 НП) та 5 у запас. На трансферному ринку можна підписати вільних агентів замість слабших гравців.</p>
-    <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка або відпочинок. Це впливає на форму й ризик травм, а атака/захист/фізо ще й назавжди прокачують відповідних гравців (позначка +N біля ОВР) — прогрес ніколи не губиться.</p>
-    <p><b>Фоли й картки.</b> У кожному матчі трапляються фоли: жовті картки та (рідше) червоні — за грубий фол або другу жовту. Червона картка залишає команду в меншості до кінця матчу, а 2 жовті за турнір чи будь-яка червона — це дискваліфікація гравця на наступний матч, так само як травма.</p>
+    <p><b>3. Тренування.</b> Перед кожним матчем обери фокус тренування — атака, захист, фізична підготовка, відпочинок або інтенсивне тренування (x2 до атаки, але вища втома, ризик травм і відкритіший матч для обох команд). Це впливає на силу команди в матчі, форму й ризик травм.</p>
     <p><b>4. Чемпіонат світу.</b> Спочатку 8 груп по 4 команди. Твоя збірна грає 3 матчі групового етапу, інші матчі симулюються.</p>
-    <p><b>5. Плей-оф.</b> Топ-2 з групи виходять у 1/8 фіналу, потім 1/4, 1/2 і фінал. Нічия після 90 хв — як на справжньому чемпіонаті світу: спочатку додатковий час (120'), а якщо нічия зберігається — серія післяматчевих пенальті вирішує переможця.</p>
+    <p><b>5. Плей-оф.</b> Топ-2 з групи виходять у 1/8 фіналу, потім 1/4, 1/2 і фінал. У плей-оф нічия автоматично вирішується додатковим голом.</p>
   </div>
   <button class="btn" id="cBtnHowBack">Назад</button>
 </div>
@@ -180,6 +184,7 @@
 <div id="cScreenHub" class="screen hidden">
   <div class="logo h1" style="font-size:22px" id="cHubTitle">ЧЕМПІОНАТ СВІТУ</div>
   <div class="sub" id="cHubSub"></div>
+  <div class="stageBar" id="cStageBar"></div>
   <div class="panel" style="max-width:640px;">
     <div class="sectionTitle">Турнірна таблиця</div>
     <table class="tbl" id="cTable"></table>
@@ -384,10 +389,11 @@ const POS_ORDER = ['GK','DF','MF','FW'];
 const STARTER_QUOTA = {GK:1,DF:4,MF:4,FW:2}; // 11 total
 
 const TRAININGS = [
-  {key:'atk', title:'Атакувальні дії', desc:'+ до сили атаки на наступний матч, а нападники й півзахисники прогресують назавжди.'},
-  {key:'def', title:'Оборонні дії', desc:'+ до стійкості оборони на наступний матч, а захисники й воротар прогресують назавжди.'},
-  {key:'phys', title:'Фізична підготовка', desc:'Швидко відновлює форму і трохи прокачує всіх гравців, але є невеликий ризик травми при перевтомі.'},
-  {key:'rest', title:'Відпочинок', desc:'Найкраще відновлення форми, без ризику травм, але без прокачки навичок.'},
+  {key:'atk', title:'Атакувальні дії', desc:'+6 до сили атаки на наступний матч.'},
+  {key:'def', title:'Оборонні дії', desc:'+6 до стійкості оборони — суперник рідше створює небезпечні моменти.'},
+  {key:'phys', title:'Фізична підготовка', desc:'Швидко відновлює форму (+20%), але є ризик травми при перевтомі.'},
+  {key:'rest', title:'Відпочинок', desc:'Найкраще відновлення форми (+35%), без ризику травм, без бонусу до сили.'},
+  {key:'intense', title:'Інтенсивне тренування (x2)', desc:'Подвійний приріст до атаки, але гравці втомлюються і грають повільніше — вищий ризик травм. Матч стає відкритішим: суперник теж частіше загрожує воротам, проте наш приріст голів помітно сильніший.'},
 ];
 
 let uid = 1;
@@ -456,7 +462,7 @@ function buildTeamGrid(){
 function selectTeam(key){
   resetState();
   CS.teamKey=key;
-  CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100, ovrBase:p.ovr, growth:0, tournamentYellows:0}));
+  CS.roster = ROSTERS[key].players.map(p=>({...p, id:'p'+(uid++), injured:0, stamina:100}));
   buildRosterList();
   showScreen('cScreenSquad');
 }
@@ -477,15 +483,11 @@ function cycleAssignment(id){
   if(p.injured>0){ toast(p.name+' травмований — недоступний ('+p.injured+' матч(і))'); return; }
   if(!inStart && !inBench){
     const counts = starterCounts();
-    const canStart = CS.starters.length<11 && counts[p.pos]<STARTER_QUOTA[p.pos];
-    if(canStart){
-      CS.starters.push(id);
-    } else if(CS.bench.length<5){
-      CS.bench.push(id);
-    } else {
-      toast('Основа і запас вже заповнені (11 + 5)');
+    if(CS.starters.length>=11 || counts[p.pos]>=STARTER_QUOTA[p.pos]){
+      toast('Немає вільного місця в основі на позицію '+POS_LABEL[p.pos]);
       return;
     }
+    CS.starters.push(id);
   } else if(inStart){
     CS.starters = CS.starters.filter(x=>x!==id);
     if(CS.bench.length<5) CS.bench.push(id);
@@ -515,8 +517,6 @@ function buildRosterList(){
       const inBench = CS.bench.includes(p.id);
       const row = document.createElement('div');
       row.className='playerRow'+(inStart?' starter':inBench?' bench':'')+(p.injured>0?' injured':'');
-      const gained = Math.max(0, Math.round(p.ovr-(p.ovrBase!=null?p.ovrBase:p.ovr)));
-      const stateLabel = p.injured>0 ? (p.banReason==='suspension'?'ДИСКВАЛІФІК. '+p.injured:'ТРАВМА '+p.injured) : inStart?'ОСНОВА':inBench?'ЗАПАС':'РЕЗЕРВ';
       row.innerHTML =
         '<div class="p-tag '+p.pos+'">'+p.pos+'</div>'+
         '<div style="flex:1;min-width:0;">'+
@@ -524,8 +524,9 @@ function buildRosterList(){
           '<div class="p-sub">'+(p.club?p.club+' • ':'')+'Вік '+p.age+' • Форма '+p.stamina+'%</div>'+
         '</div>'+
         '<div class="stambar"><i style="width:'+p.stamina+'%"></i></div>'+
-        '<div class="p-ovr">'+p.ovr+(gained>0?'<span style="color:#5ecf7a;font-size:9px;display:block;">+'+gained+'</span>':'')+'</div>'+
-        '<div class="p-state '+(p.injured>0?'hurt':inStart?'on':inBench?'bn':'')+'">'+stateLabel+
+        '<div class="p-ovr">'+p.ovr+'</div>'+
+        '<div class="p-state '+(p.injured>0?'hurt':inStart?'on':inBench?'bn':'')+'">'+
+          (p.injured>0?'ТРАВМА '+p.injured:inStart?'ОСНОВА':inBench?'ЗАПАС':'РЕЗЕРВ')+
         '</div>';
       row.onclick=()=>cycleAssignment(p.id);
       wrap.appendChild(row);
@@ -594,7 +595,7 @@ function openSignFlow(fa){
   CS.roster = CS.roster.filter(p=>p.id!==weakest.id);
   CS.starters = CS.starters.filter(id=>id!==weakest.id);
   CS.bench = CS.bench.filter(id=>id!==weakest.id);
-  CS.roster.push({name:fa.name,club:fa.club,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100,ovrBase:fa.ovr,growth:0,tournamentYellows:0});
+  CS.roster.push({name:fa.name,club:fa.club,pos:fa.pos,ovr:fa.ovr,age:fa.age,id:'p'+(uid++),injured:0,stamina:100});
   CS.freeAgents = CS.freeAgents.filter(x=>x.id!==fa.id);
   toast(fa.name+' підписаний!');
   buildTransferList();
@@ -725,7 +726,18 @@ function simulateNonUserBracketMatches(){
     m.ga=r.ga; m.gb=r.gb; m.winner=r.winner;
   });
 }
-function stageLabel(){ return ({group:'ГРУПОВИЙ ЕТАП',r16:'1/8 ФІНАЛУ',qf:'1/4 ФІНАЛУ',sf:'1/2 ФІНАЛУ',final:'ФІНАЛ'})[CS.stage] || 'ЧЕМПІОНАТ СВІТУ'; }/* ========================================================================
+function stageLabel(){ return ({group:'ГРУПОВИЙ ЕТАП',r16:'1/8 ФІНАЛУ',qf:'1/4 ФІНАЛУ',sf:'1/2 ФІНАЛУ',final:'ФІНАЛ'})[CS.stage] || 'ЧЕМПІОНАТ СВІТУ'; }
+const STAGE_ORDER = ['group','r16','qf','sf','final'];
+const STAGE_SHORT = {group:'ГРУПА',r16:'1/8',qf:'1/4',sf:'1/2',final:'ФІНАЛ'};
+function renderStageBreadcrumb(){
+  const bar = document.getElementById('cStageBar');
+  if(!bar) return;
+  const curIdx = STAGE_ORDER.indexOf(CS.stage);
+  bar.innerHTML = STAGE_ORDER.map((s,i)=>{
+    const cls = i<curIdx? 'done' : i===curIdx? 'active' : '';
+    return '<span class="stagePill '+cls+'">'+STAGE_SHORT[s]+'</span>';
+  }).join('');
+}/* ========================================================================
    BEST XI helper for bot teams
    ======================================================================== */
 function bestXI(players){
@@ -763,6 +775,7 @@ function renderGroupHub(){
   const g = userGroup();
   document.getElementById('cHubTitle').textContent = 'ГРУПОВИЙ ЕТАП';
   document.getElementById('cHubSub').textContent = 'Група '+g+' • '+teamName(CS.teamKey)+' • топ-2 виходять у плей-оф';
+  renderStageBreadcrumb();
 
   const tbl = document.getElementById('cTable');
   let html = '<tr><th style="text-align:left">Команда</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>РМ</th><th>О</th></tr>';
@@ -824,6 +837,7 @@ function renderGroupHub(){
 function renderBracketHub(){
   document.getElementById('cHubTitle').textContent = stageLabel();
   document.getElementById('cHubSub').textContent = teamName(CS.teamKey)+' • '+(CS.stage==='final'?'останній матч':'плей-оф');
+  renderStageBreadcrumb();
   document.getElementById('cTable').innerHTML = '<tr><th style="text-align:left">Стадія</th><th>Команд</th></tr><tr class="me"><td class="name">'+stageLabel()+'</td><td>'+({r16:16,qf:8,sf:4,final:2}[CS.stage]||0)+'</td></tr>';
 
   const fx = document.getElementById('cFixtures');
@@ -834,7 +848,7 @@ function renderBracketHub(){
     const involvesUser = m.a===CS.teamKey || m.b===CS.teamKey;
     if(involvesUser) userMatch = m;
     row.className = 'bmatch'+(involvesUser?' userin':'');
-    const score = m.winner ? (m.ga+' - '+m.gb+(m.pkA!=null?' (пен. '+m.pkA+':'+m.pkB+')':'')) : 'vs';
+    const score = m.winner ? (m.ga+' - '+m.gb) : 'vs';
     row.innerHTML = '<span class="'+(m.winner===m.a?'w':'')+'">'+teamName(m.a)+'</span><span class="mono">'+score+'</span><span class="'+(m.winner===m.b?'w':'')+'">'+teamName(m.b)+'</span>';
     fx.appendChild(row);
   });
@@ -855,7 +869,7 @@ function renderBracketHub(){
       const b = document.createElement('button');
       b.className='btn gold';
       b.textContent = champ===CS.teamKey ? 'Отримати трофей 🏆' : 'Переглянути результат';
-      b.onclick = ()=> champ===CS.teamKey ? showChampion() : showEliminated('Ви програли у фіналі. Рахунок: '+CS.bracket[0].ga+' - '+CS.bracket[0].gb+(CS.bracket[0].pkA!=null?' (пен. '+CS.bracket[0].pkA+':'+CS.bracket[0].pkB+')':'')+'.');
+      b.onclick = ()=> champ===CS.teamKey ? showChampion() : showEliminated('Ви програли у фіналі. Рахунок: '+CS.bracket[0].ga+' - '+CS.bracket[0].gb+'.');
       btnWrap.appendChild(b);
     } else {
       const b = document.createElement('button');
@@ -897,10 +911,9 @@ function openTraining(oppKey){
   showScreen('cScreenTraining');
 }
 function applyTraining(key){
-  CS.trainBonus = {atk:0,def:0};
-  if(key==='atk') CS.trainBonus.atk = 9;
-  if(key==='def') CS.trainBonus.def = 9;
-  let injuryToastFired = false;
+  CS.trainBonus = {atk:0,def:0,intense:false};
+  if(key==='atk') CS.trainBonus.atk = 6;
+  if(key==='def') CS.trainBonus.def = 6;
   if(key==='phys'){
     CS.roster.forEach(p=>{
       if(p.injured>0) return;
@@ -908,45 +921,27 @@ function applyTraining(key){
       p.stamina = Math.min(100,p.stamina+20);
       if(risky && Math.random()<0.05){
         p.injured = 1+Math.floor(Math.random()*2);
-        p.banReason = 'injury';
         toast(p.name+' отримав травму на тренуванні! Пропустить '+p.injured+' матч(і)');
-        injuryToastFired = true;
       }
     });
   }
   if(key==='rest'){
     CS.roster.forEach(p=>{ if(p.injured===0) p.stamina = Math.min(100,p.stamina+35); });
   }
-  const improved = growPlayers(key);
-  if(!injuryToastFired && improved.length){
-    const names = improved.slice(0,2).map(p=>p.name).join(', ');
-    const extra = improved.length>2 ? ' та ще '+(improved.length-2) : '';
-    toast('Прогрес: '+names+extra+' стали сильнішими (ОВР +1)');
+  if(key==='intense'){
+    CS.trainBonus.atk = 8;
+    CS.trainBonus.def = -3;
+    CS.trainBonus.intense = true;
+    CS.roster.forEach(p=>{
+      if(p.injured>0) return;
+      p.stamina = Math.max(15, p.stamina-12);
+      if(Math.random()<0.05){
+        p.injured = 1+Math.floor(Math.random()*2);
+        toast(p.name+' отримав травму на інтенсивному тренуванні! Пропустить '+p.injured+' матч(і)');
+      }
+    });
+    toast('Інтенсивне тренування: команда швидше створює моменти, але й ризикує більше');
   }
-}
-
-// Training permanently grows player skill (never resets between matches, unlike the one-match trainBonus above).
-// Attack training grows FW/MF, defence training grows DF/GK, physical training gives everyone a small all-round boost.
-// Rest is pure recovery — no skill growth, matching its in-game description.
-function growPlayers(key){
-  const leveledUp = [];
-  CS.roster.forEach(p=>{
-    if(p.injured>0) return;
-    if(p.ovrBase==null) p.ovrBase = p.ovr;
-    if(p.growth==null) p.growth = 0;
-    const growthCap = Math.min(6, 99-p.ovrBase);
-    if(p.growth>=growthCap) return;
-    let relevant = false, rate = 0;
-    if(key==='atk'){ relevant = (p.pos==='FW'||p.pos==='MF'); rate = 0.45+Math.random()*0.35; }
-    else if(key==='def'){ relevant = (p.pos==='DF'||p.pos==='GK'); rate = 0.45+Math.random()*0.35; }
-    else if(key==='phys'){ relevant = true; rate = 0.2+Math.random()*0.2; }
-    if(!relevant) return;
-    const before = p.ovr;
-    p.growth = Math.min(growthCap, p.growth+rate);
-    p.ovr = Math.min(99, Math.round(p.ovrBase+p.growth));
-    if(p.ovr>before) leveledUp.push(p);
-  });
-  return leveledUp;
 }
 
 /* ========================================================================
@@ -965,125 +960,34 @@ function pickScorer(onPitch){
   for(let i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return pool[i]; }
   return pool[pool.length-1];
 }
-function simulateMatch(sideA,sideB,opts){
-  opts = opts||{};
-  let strA = teamStrength(sideA.onPitch);
-  let strB = teamStrength(sideB.onPitch);
-  strA *= 0.78+0.22*((sideA.avgStamina||90)/100);
-  strB *= 0.78+0.22*((sideB.avgStamina||90)/100);
-  // training bonuses act directly on shot quality/finishing, on top of the base strength diff,
-  // so a training focus is always felt in the match regardless of the overall rating gap.
-  const trainAtkA=(sideA.trainAtk||0), trainDefA=(sideA.trainDef||0);
-  const trainAtkB=(sideB.trainAtk||0), trainDefB=(sideB.trainDef||0);
+function simulateMatch(sideA,sideB){
+  let strA = teamStrength(sideA.onPitch) + (sideA.trainAtk||0) - (sideB.trainDef||0);
+  let strB = teamStrength(sideB.onPitch) + (sideB.trainAtk||0) - (sideA.trainDef||0);
+  strA *= 0.85+0.15*((sideA.avgStamina||90)/100);
+  strB *= 0.85+0.15*((sideB.avgStamina||90)/100);
+  const diff = strA-strB;
+  const openPlay = !!(sideA.intense || sideB.intense); // інтенсивне тренування робить матч відкритішим для обох команд
+  const chances = 9+Math.floor(Math.random()*5) + (openPlay?3:0);
   let golsA=0, golsB=0;
   const events=[];
-
-  /* -------- fouls / cards -------- */
-  const yellowCounts = {};       // playerId -> yellows so far this match
-  const sentOff = {};            // playerId -> minute sent off
-  const redMinutesA = [], redMinutesB = []; // sorted minutes A/B went a man down
-  function foulPool(side){ return side.onPitch.filter(p=>!(p.id in sentOff)); }
-  function pickFouler(side){
-    const pool = foulPool(side);
-    if(!pool.length) return null;
-    const weights = pool.map(p=> p.pos==='DF'?3:p.pos==='MF'?2.4:p.pos==='FW'?1.2:0.4);
-    const total = weights.reduce((a,b)=>a+b,0);
-    let r = Math.random()*total;
-    for(let i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return pool[i]; }
-    return pool[pool.length-1];
-  }
-  const totalCards = 1+Math.floor(Math.random()*4);
-  const maxCardMinute = opts.knockout ? 120 : 90;
-  for(let i=0;i<totalCards;i++){
-    const isA = Math.random()<0.5;
-    const side = isA?sideA:sideB;
-    const player = pickFouler(side);
-    if(!player) continue;
-    const minute = 1+Math.floor(Math.random()*maxCardMinute);
-    const straightRed = Math.random()<0.018;
-    if(straightRed){
-      sentOff[player.id]=minute;
-      (isA?redMinutesA:redMinutesB).push(minute);
-      events.push({min:minute,type:'card',card:'red',team:isA?'A':'B',player:player.name,playerId:player.id,reason:'straight'});
-    } else {
-      yellowCounts[player.id] = (yellowCounts[player.id]||0)+1;
-      if(yellowCounts[player.id]>=2){
-        sentOff[player.id]=minute;
-        (isA?redMinutesA:redMinutesB).push(minute);
-        events.push({min:minute,type:'card',card:'red',team:isA?'A':'B',player:player.name,playerId:player.id,reason:'second-yellow'});
-      } else {
-        events.push({min:minute,type:'card',card:'yellow',team:isA?'A':'B',player:player.name,playerId:player.id});
-      }
+  for(let i=0;i<chances;i++){
+    const minute = 1+Math.floor(Math.random()*90);
+    const isA = Math.random() < (0.5+diff/280);
+    const own = isA?strA:strB, opp = isA?strB:strA;
+    let prob = Math.max(0.08, Math.min(0.6, 0.27+(own-opp)/170));
+    if(openPlay) prob = Math.min(0.68, prob+0.05); // більше голів в обидва боки при інтенсивному режимі
+    if(Math.random()<prob){
+      const scorer = pickScorer(isA?sideA.onPitch:sideB.onPitch);
+      if(isA) golsA++; else golsB++;
+      events.push({min:minute,type:'goal',team:isA?'A':'B',player:scorer?scorer.name:'Гравець'});
     }
   }
-  redMinutesA.sort((x,y)=>x-y); redMinutesB.sort((x,y)=>x-y);
-  function menDownAt(mins,minute){ return mins.filter(m=>m<=minute).length; }
-
-  function playChances(n, minMin, maxMin){
-    for(let i=0;i<n;i++){
-      const minute = minMin+Math.floor(Math.random()*(maxMin-minMin+1));
-      const downA = menDownAt(redMinutesA,minute), downB = menDownAt(redMinutesB,minute);
-      const effStrA = strA*Math.pow(0.92,downA), effStrB = strB*Math.pow(0.92,downB);
-      const effDiff = effStrA-effStrB;
-      const isA = Math.random() < (0.5+effDiff/280);
-      const own = isA?effStrA:effStrB, opp = isA?effStrB:effStrA;
-      let prob = Math.max(0.08, Math.min(0.6, 0.27+(own-opp)/170));
-      prob += isA ? (trainAtkA-trainDefB)/100 : (trainAtkB-trainDefA)/100;
-      prob = Math.max(0.05, Math.min(0.72, prob));
-      if(Math.random()<prob){
-        const eligible = (isA?sideA.onPitch:sideB.onPitch).filter(p=>!(p.id in sentOff) || sentOff[p.id]>minute);
-        const scorer = pickScorer(eligible.length?eligible:(isA?sideA.onPitch:sideB.onPitch));
-        if(isA) golsA++; else golsB++;
-        events.push({min:minute,type:'goal',team:isA?'A':'B',player:scorer?scorer.name:'Гравець'});
-      }
-    }
-  }
-  playChances(9+Math.floor(Math.random()*5), 1, 90);
-
-  let wentToExtraTime=false, wentToPenalties=false, pkA=null, pkB=null, pkWinnerSide=null, pkEvents=null;
-  if(opts.knockout && golsA===golsB){
-    wentToExtraTime = true;
-    playChances(2+Math.floor(Math.random()*3), 91, 120);
-    if(golsA===golsB){
-      wentToPenalties = true;
-      const gkA = sideA.onPitch.find(p=>p.pos==='GK');
-      const gkB = sideB.onPitch.find(p=>p.pos==='GK');
-      const takersA = sideA.onPitch.filter(p=>p.pos!=='GK').sort((a,b)=>b.ovr-a.ovr);
-      const takersB = sideB.onPitch.filter(p=>p.pos!=='GK').sort((a,b)=>b.ovr-a.ovr);
-      pkA=0; pkB=0; pkEvents=[];
-      function takeKick(taker,gk,teamLabel){
-        const gkSkill = gk ? (gk.ovr-75)/400 : 0;
-        const takerSkill = taker ? (taker.ovr-75)/500 : 0;
-        const p = Math.max(0.45,Math.min(0.92, 0.76+takerSkill-gkSkill));
-        const scored = Math.random()<p;
-        pkEvents.push({team:teamLabel,player:taker?taker.name:'Гравець',scored});
-        return scored;
-      }
-      let round=0;
-      for(; round<5; round++){
-        if(takeKick(takersA[round%takersA.length],gkB,'A')) pkA++;
-        if(takeKick(takersB[round%takersB.length],gkA,'B')) pkB++;
-        const remRounds = 5-round-1;
-        if(pkA>pkB+remRounds || pkB>pkA+remRounds) break;
-      }
-      let sd=0;
-      while(pkA===pkB && sd<10){
-        const aScored = takeKick(takersA[(5+sd)%takersA.length],gkB,'A');
-        const bScored = takeKick(takersB[(5+sd)%takersB.length],gkA,'B');
-        if(aScored) pkA++;
-        if(bScored) pkB++;
-        sd++;
-      }
-      pkWinnerSide = pkA>pkB?'A':'B';
-      events.push({type:'pk',min:121,pkA,pkB,pkWinnerSide,pkEvents});
-    }
-  }
-
   // injuries only tracked for sides flagged isUser
   [sideA,sideB].forEach((side,idx)=>{
     if(!side.isUser) return;
+    const injuryRate = side.intense ? 0.06 : 0.035; // втомлені гравці на інтенсивному тренуванні ризикують більше
     side.onPitch.forEach(p=>{
-      if(Math.random()<0.035){
+      if(Math.random()<injuryRate){
         const dur = 1+Math.floor(Math.random()*2);
         p.injured = dur;
         events.push({min:1+Math.floor(Math.random()*90),type:'injury',team:idx===0?'A':'B',player:p.name,playerId:p.id||null,dur:dur});
@@ -1091,12 +995,15 @@ function simulateMatch(sideA,sideB,opts){
     });
   });
   events.sort((x,y)=>x.min-y.min);
-  return {golsA,golsB,events,wentToExtraTime,wentToPenalties,pkA,pkB,pkWinnerSide};
+  return {golsA,golsB,events};
 }
 
 function recordCoachMatchResult(pending, result){
-  // result.golsA/golsB always correspond to pending.a/pending.b respectively —
-  // no need (and previously wrongly done) to flip them based on which side the user played.
+  // result.golsA завжди належить pending.a, а result.golsB — pending.b,
+  // бо startUserMatch вже сам обирає порядок виклику simulateMatch залежно від userIsA.
+  // Раніше тут була зайва умова, яка ще раз міняла голи місцями і при програші
+  // "з іншого боку сітки" (коли команда гравця йшла другою в парі) записувала
+  // рахунок навпаки — з перемоги робила поразку.
   const ga = result.golsA;
   const gb = result.golsB;
   if(pending.stage==='group'){
@@ -1110,17 +1017,12 @@ function recordCoachMatchResult(pending, result){
   }
   const match = CS.bracket.find(m=>m.a===pending.a && m.b===pending.b && !m.winner);
   if(!match) return;
-  match.ga = ga;
-  match.gb = gb;
-  if(ga!==gb){
-    match.winner = ga>gb ? pending.a : pending.b;
-  } else if(result.wentToPenalties){
-    match.pkA = result.pkA; // pkA/pkB already map to pending.a/pending.b, same as ga/gb
-    match.pkB = result.pkB;
-    match.winner = result.pkWinnerSide==='A' ? pending.a : pending.b;
-  } else {
-    // safety net — should not happen for user matches since simulateMatch always resolves knockout ties
-    match.winner = Math.random()<0.5 ? pending.a : pending.b;
+  const resolved = resolveKnockoutScore(pending.a, pending.b, ga, gb);
+  match.ga = resolved.ga;
+  match.gb = resolved.gb;
+  match.winner = resolved.winner;
+  if(resolved.extra){
+    result.events.push({min:120,type:'goal',team:resolved.winner===pending.a?'A':'B',player:'Додатковий час'});
   }
 }
 
@@ -1135,11 +1037,10 @@ function startUserMatch(oppKey){
   const pending = CS.pendingMatch;
   const userIsA = pending.a===CS.teamKey;
 
-  const sideUser = {onPitch:userOnPitch,isUser:true,trainAtk:CS.trainBonus.atk,trainDef:CS.trainBonus.def,avgStamina};
-  const sideOpp  = {onPitch:oppOnPitch,isUser:false,trainAtk:0,trainDef:0,avgStamina:88};
+  const sideUser = {onPitch:userOnPitch,isUser:true,trainAtk:CS.trainBonus.atk,trainDef:CS.trainBonus.def,avgStamina,intense:!!CS.trainBonus.intense};
+  const sideOpp  = {onPitch:oppOnPitch,isUser:false,trainAtk:(CS.trainBonus.intense?3:0),trainDef:0,avgStamina:88};
 
-  const isKnockout = pending.stage!=='group';
-  const result = userIsA? simulateMatch(sideUser,sideOpp,{knockout:isKnockout}) : simulateMatch(sideOpp,sideUser,{knockout:isKnockout});
+  const result = userIsA? simulateMatch(sideUser,sideOpp) : simulateMatch(sideOpp,sideUser);
   const golsFor = userIsA? result.golsA : result.golsB;
   const golsAg = userIsA? result.golsB : result.golsA;
 
@@ -1153,28 +1054,8 @@ function startUserMatch(oppKey){
         p.injured = Math.max(0,p.injured-1);
       }
     });
-    result.events.filter(e=>e.type==='card' && e.playerId).forEach(ev=>{
-      const p = CS.roster.find(x=>x.id===ev.playerId);
-      if(!p) return; // opponent card — not a persistent squad, nothing to track
-      if(ev.card==='red'){
-        p.injured = Math.max(p.injured||0,1);
-        p.banReason = 'suspension';
-        p.tournamentYellows = 0;
-        toast(p.name+' отримав червону картку — пропустить наступний матч');
-      } else {
-        p.tournamentYellows = (p.tournamentYellows||0)+1;
-        if(p.tournamentYellows>=2){
-          p.injured = Math.max(p.injured||0,1);
-          p.banReason = 'suspension';
-          p.tournamentYellows = 0;
-          toast(p.name+' — 2 жовті картки за турнір, дискваліфікація на 1 матч');
-        }
-      }
-    });
     recordCoachMatchResult(pending, result);
-    let userWonPk = null;
-    if(result.wentToPenalties) userWonPk = userIsA ? result.pkWinnerSide==='A' : result.pkWinnerSide==='B';
-    showResult(oppKey, golsFor, golsAg, result.events, result.wentToPenalties?{pkFor:userIsA?result.pkA:result.pkB, pkAg:userIsA?result.pkB:result.pkA, userWon:userWonPk}:null);
+    showResult(oppKey, golsFor, golsAg, result.events);
   });
 }
 
@@ -1198,49 +1079,30 @@ function runMatchScreen(oppKey, userIsA, result, onDone){
     if(ev.type==='goal'){
       text = '⚽ ГОЛ! '+ev.player+' ('+(ev.team==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent)+')';
       row.className='evt goal';
-      row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
-    } else if(ev.type==='injury'){
+    } else {
       text = '🚑 Травма: '+ev.player+' — вибуває на '+ev.dur+' матч(і)';
       row.className='evt injury';
-      row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
-    } else if(ev.type==='card'){
-      const teamName_ = ev.team==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent;
-      text = (ev.card==='red'?'🟥 Червона картка: ':'🟨 Жовта картка: ')+ev.player+' ('+teamName_+')'+(ev.reason==='second-yellow'?' — 2-га жовта!':'');
-      row.className='evt'+(ev.card==='red'?' injury':'');
-      row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
-    } else if(ev.type==='pk'){
-      const winnerName = ev.pkWinnerSide==='A'?document.getElementById('cMTeamA').textContent:document.getElementById('cMTeamB').textContent;
-      const kicksHtml = ev.pkEvents.map(k=>(k.scored?'✅':'❌')+' '+k.player).join(' &nbsp; ');
-      row.className='evt goal';
-      row.innerHTML = '<div style="width:100%"><div class="em" style="margin-bottom:3px;">ПЕН.</div>'+
-        '<div>🥅 СЕРІЯ ПЕНАЛЬТІ: '+winnerName+' перемагає '+ev.pkA+':'+ev.pkB+'</div>'+
-        '<div class="sub" style="margin-top:3px;font-size:11px;">'+kicksHtml+'</div></div>';
     }
+    row.innerHTML = '<span class="em">'+ev.min+"'</span><span>"+text+'</span>';
     log.appendChild(row);
     log.scrollTop = 0;
   }
   function step(){
     if(i>=events.length){ finish(); return; }
     const ev = events[i];
-    if(ev.type==='pk'){
-      document.getElementById('cMClock').textContent = 'ПЕНАЛЬТІ';
-    } else {
-      document.getElementById('cMClock').textContent = (ev.min>90?ev.min+"' (дод. час)":ev.min+"'");
-    }
+    document.getElementById('cMClock').textContent = ev.min+"'";
     if(ev.type==='goal'){
       if(ev.team==='A') gA++; else gB++;
       document.getElementById('cMScore').textContent = gA+' : '+gB;
     }
     pushEvent(ev);
     i++;
-    CS.matchTimer = setTimeout(step, ev.type==='pk'?900:420);
+    CS.matchTimer = setTimeout(step, 420);
   }
   function finish(){
     clearTimeout(CS.matchTimer);
-    document.getElementById('cMClock').textContent = result.wentToExtraTime? "120'" : "90'";
-    let scoreText = result.golsA+' : '+result.golsB;
-    if(result.wentToPenalties) scoreText += '  (пен. '+result.pkA+':'+result.pkB+')';
-    document.getElementById('cMScore').textContent = scoreText;
+    document.getElementById('cMClock').textContent = "90'";
+    document.getElementById('cMScore').textContent = result.golsA+' : '+result.golsB;
     document.getElementById('cBtnSkip').classList.add('hidden');
     document.getElementById('cBtnMatchCont').classList.remove('hidden');
     document.getElementById('cBtnMatchCont').onclick = onDone;
@@ -1257,21 +1119,13 @@ function runMatchScreen(oppKey, userIsA, result, onDone){
   step();
 }
 
-function showResult(oppKey, golsFor, golsAg, events, pk){
-  let title;
-  if(pk) title = pk.userWon? 'ПЕРЕМОГА У СЕРІЇ ПЕНАЛЬТІ!' : 'ПОРАЗКА У СЕРІЇ ПЕНАЛЬТІ';
-  else title = golsFor>golsAg?'ПЕРЕМОГА!':golsFor<golsAg?'ПОРАЗКА':'НІЧИЯ';
-  document.getElementById('cResTitle').textContent = title;
-  document.getElementById('cResScore').textContent = golsFor+' : '+golsAg+(pk?' (пен. '+pk.pkFor+':'+pk.pkAg+')':'');
+function showResult(oppKey, golsFor, golsAg, events){
+  document.getElementById('cResTitle').textContent = golsFor>golsAg?'ПЕРЕМОГА!':golsFor<golsAg?'ПОРАЗКА':'НІЧИЯ';
+  document.getElementById('cResScore').textContent = golsFor+' : '+golsAg;
   document.getElementById('cResSub').textContent = teamName(CS.teamKey)+' проти '+teamName(oppKey);
   const injuries = events.filter(e=>e.type==='injury');
-  const cards = events.filter(e=>e.type==='card');
   const inj = document.getElementById('cResInjuries');
-  let html = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
-  if(cards.length){
-    html += '<div class="sectionTitle">Картки матчу</div>'+cards.map(e=>'<div class="sub">'+(e.card==='red'?'🟥':'🟨')+' '+e.player+(e.card==='red'?' — вилучення':'')+'</div>').join('');
-  }
-  inj.innerHTML = html;
+  inj.innerHTML = injuries.length? ('<div class="sectionTitle">Травми матчу</div>'+injuries.map(e=>'<div class="sub">🚑 '+e.player+' — '+e.dur+' матч(і)</div>').join('')) : '';
   showScreen('cScreenResult');
 }
 
@@ -1280,7 +1134,7 @@ document.getElementById('cBtnResultCont').onclick = ()=>{
   if(CS.pendingMatch && CS.pendingMatch.stage!=='group'){
     const m = CS.bracket.find(x=>x.a===CS.pendingMatch.a && x.b===CS.pendingMatch.b);
     if(m && m.winner!==CS.teamKey){
-      showEliminated('Ви вибули на стадії «'+stageLabel()+'». Рахунок: '+m.ga+' - '+m.gb+(m.pkA!=null?' (пен. '+m.pkA+':'+m.pkB+')':'')+'.');
+      showEliminated('Ви вибули на стадії «'+stageLabel()+'». Рахунок: '+m.ga+' - '+m.gb+'.');
       return;
     }
   }
